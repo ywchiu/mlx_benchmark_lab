@@ -1,17 +1,19 @@
-# rapid-mlx 個別測試報告
+# rapid-mlx — Detailed Report
 
-## 啟動指令
+[繁體中文版](01-rapid-mlx_zh.md)
+
+## How we ran it
 
 ```bash
 rapid-mlx serve mlx-community/Qwen3.6-35B-A3B-4bit \
   --port 8765 --disable-prefix-cache
 ```
 
-> **重要**：`--disable-prefix-cache` 是必要的，否則 prefix cache 會嚴重污染重複 prompt 的 prefill 數據（部分 run 達到 100K+ tps 是 cache hit，非真實計算）。
+The `--disable-prefix-cache` flag is essential, not optional. rapid-mlx caches prompt prefixes by default to speed up repeated requests, and during a benchmark where every run uses the same prompt, that cache will completely skip the prefill computation for runs 2 through 5 — leaving you with prefill-tps numbers in the hundreds of thousands, which is physically impossible for a 35B model. We learned this the hard way in the first round of testing. With the cache disabled, every measurement reflects honest cold-prefill performance.
 
 ---
 
-## 完整統計（n=5）
+## Full statistics (n=5 per cell)
 
 ### Decode tps
 
@@ -51,36 +53,28 @@ rapid-mlx serve mlx-community/Qwen3.6-35B-A3B-4bit \
 
 ---
 
-## 觀察與分析
+## What the data says
 
-### 強項
-- **短 context decode 快**：64–512 區間中位數 119–125 tps，接近領先群
-- **長 context 變異極低**：4K 起所有 stddev 都 < 1.6，32K 時 stddev 0.2 tps（最穩）
-- **Prefill 在 2K–4K 達峰值**（3000+ tps）
+rapid-mlx's strength is short-context decoding. At 64 to 512 tokens it sits comfortably in the leading group at 119–125 tokens per second, and importantly, those numbers barely move from run to run — the standard deviation at 32K is just 0.2 tps, the lowest of any framework we tested at long context. This is the kind of stability you want when you're trying to make a latency promise to a client.
 
-### 弱項
-- **TTFT 在小 context 抖動明顯**：64 token 時 stddev 達 136ms（中位數 169ms 的 80%），偶有單發 462ms 的 outlier
-- **Prefill 在 64–512 短 prompt 時偏低**（456 / 1026 tps），可能是 chunk-prefill 對小 prompt 不友善
-- **長 context decode 衰退較快**：32K 時 72.3 tps，比 omlx（82.1）慢約 12%
+The prefill numbers in the 64–512 range are oddly low (456 and 1,026 tps respectively) compared to omlx and mlx-vlm, both of which clear 1,800 tps at 512 tokens. We suspect this is the chunked-prefill path being suboptimal for tiny prompts — rapid-mlx is optimized for production-style traffic where prompts arrive in bursts and can be batched, not for one-tiny-prompt-at-a-time micro-benchmarks. Once the prompt grows past 2K tokens, prefill jumps up to 3,000+ tps and stays competitive.
 
-### 衰退率
-從 64 → 32K：**124.9 → 72.3 tps（-42%）**
+The weakness is TTFT jitter at small context. At 64 tokens we measured a median of 169 ms but a maximum of 462 ms across the five runs — meaning some requests are nearly three times slower than the typical case for no obvious reason. The standard deviation of 136 ms is close to the median itself, which is a red flag if you care about consistent response latency. By 4K context this jitter has dropped to about 10% of the median, so it only affects short-prompt workloads.
+
+Decode degradation across context lengths is steady and predictable. From 64 to 32K the median falls from 124.9 to 72.3 tps, a drop of 42%. This is worse than omlx (-34%) but better than mlx-vlm. In absolute terms rapid-mlx loses its long-context lead to omlx by 16K tokens — at that point omlx is already 22% faster.
 
 ---
 
-## 適用情境
+## When to use rapid-mlx
 
-✅ 短到中 context 的 chat、coding agent
-✅ 對 decode 穩定性有要求（長 context stddev 極低）
-✅ 不在意小 context TTFT 偶有抖動
+It's the right pick when you need short-to-medium-context decode and can tolerate some TTFT jitter. The most flexible feature set among the four frameworks (paged KV cache, multi-token prediction, prefix cache, KV-cache quantization) makes it a good experimentation platform for new optimization techniques. If you're building something like a coding agent that processes 1K–4K context at a time and you want to be able to tune cache memory, prefix-cache size, and other parameters, rapid-mlx gives you the most knobs.
 
-❌ 32K+ 超長 context（omlx 較佳）
-❌ 對 TTFT 變異敏感的 SLA 場景
+It's the wrong pick for ultra-long-context workloads (omlx wins past 16K) and for SLA-driven applications where TTFT consistency matters more than peak speed.
 
 ---
 
-## 注意事項
+## Things to watch out for
 
-1. **必須加 `--disable-prefix-cache`**（否則 prefill 數據不可信）
-2. `/no_think` 不會生效——模型仍會輸出 reasoning_content（thinking）；max_tokens 也不會限制 thinking 區段，可能產出超出預期的 token 數（本測試最高 2155 tokens）
-3. Health endpoint：`GET /health` 回傳 `{"ready":true}` 後再開始打 request
+The `/no_think` Qwen3 prompt convention does not work reliably with rapid-mlx. The model still emits reasoning tokens (`reasoning_content` chunks in the stream), and worse, `max_tokens=256` does not cap the thinking phase — we observed outputs as long as 2,155 tokens (1,879 thinking + 276 visible). If you need strict output length control, you'll need to filter `reasoning_content` on the client side or pass `enable_thinking=false` through the chat-template parameters.
+
+The health endpoint at `GET /health` returns `{"ready":true}` once the model is loaded, which is the right thing to poll for before kicking off a benchmark. Don't use `/v1/models` — that's available immediately on startup, before the model is actually loaded.

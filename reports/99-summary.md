@@ -1,126 +1,51 @@
-# 跨框架交叉比較與總結
+# Cross-Framework Summary and Lessons Learned
 
-## 一、各指標冠軍速覽
+[繁體中文版](99-summary_zh.md)
 
-| 指標 | 冠軍 | 次強 | 備註 |
-|---|---|---|---|
-| 短 context decode（64–512） | **dflash-mlx**（167 tps） | rapid-mlx（125） | speculative 命中率高時最快 |
-| 中 context decode（2K–4K） | **omlx**（120 tps） | dflash @2K（160） | omlx 最穩，dflash 看內容 |
-| 長 context decode（8K–32K） | **omlx**（82 tps @32K） | rapid-mlx（72） | omlx 衰退最緩 |
-| Prefill 峰值 | **omlx**（3989 tps @4K） | mlx-vlm（3818 @8K） | dflash 無法測量 |
-| 短 TTFT 中位數 | **mlx-vlm / omlx**（130–250ms） | rapid-mlx | dflash 永遠慢 200ms+ |
-| TTFT 變異最小 | **omlx**（512: stddev 3ms） | mlx-vlm | rapid 在 64 token 抖 136ms |
-| Decode 變異最小 | **mlx-vlm**（短 ctx 0.2 tps） | omlx | 全範圍都穩 |
-| Decode 衰退率 | **mlx-vlm**（-29%） | omlx（-34%） | dflash 災難 -92% |
-| 32K context | **omlx**（82 tps） | rapid-mlx（72） | dflash 不可用（12 tps） |
-| 多模態支援 | **mlx-vlm**（唯一） | — | — |
+## Who wins what
 
----
+The headline metrics fan out across the four frameworks pretty cleanly. dflash-mlx wins short-context decode (64 to 2K) thanks to its speculative-decoding speedup, often by a 30–35% margin. omlx wins long-context decode (4K through 32K), and by a meaningful gap — at 32K it's running at 82 tokens per second while dflash-mlx has fallen to 12. omlx also wins prefill (peaking at 3,989 tps at 4K) and TTFT consistency (standard deviation in the 3–25 ms range at moderate context, ten times tighter than the others). mlx-vlm wins decode-stability at short context (stddev of 0.2 tps at 64 and 512 tokens) and ties for best prefill at 8K. rapid-mlx never wins outright on any single metric but is competitive everywhere, and has the most flexible feature set.
 
-## 二、關鍵交叉比較
+For multimodal input — image, audio, video — mlx-vlm is the only choice in this set, so the comparison there is moot.
 
-### 2.1 「快」與「穩」的取捨
+## The fast-versus-stable tradeoff
 
-dflash 用 167 tps 拿下短 context 王座，但代價是：
-- TTFT 永遠比競爭者慢 200–300ms（draft 模型啟動成本）
-- 32K 時崩盤
-- 即使在中段 context（512、4K）也未必加速
+The most interesting pattern in the data is how dramatically the framework rankings depend on what you're optimizing for. dflash-mlx hits 167 tps at 64 tokens, but pays for it with 200+ ms of extra TTFT compared to omlx, and with the catastrophic 32K crash. omlx peaks at 124 tps but does so in a perfectly steady, predictable way that's far easier to build SLAs around. Choosing between them is a question about your traffic patterns, not a question about which framework is "better."
 
-omlx 全程 117–124 tps，看似平凡，但：
-- 任何 context 都不會比第二名差太多
-- 變異最低（穩定可預測）
-- **長 context 突然變王者**（其他都掉得比它快）
+Two principles fall out of this. First, peak speed and stability tend to trade off — the speedup from speculative decoding requires hitting a draft prediction, and when that hit rate varies by content, speed varies too. Second, there is no universal winner. Every framework here has a regime where it wins and a regime where it loses, and picking the right one starts with identifying which regime your workload is in.
 
-### 2.2 為什麼 rapid-mlx 在 prefill 表現比預期差？
+## Why rapid-mlx looked stronger in the first round
 
-第一次測試（含 prefix cache）rapid-mlx prefill 高達 5086 tps；本次測試（`--disable-prefix-cache`）僅 1987 tps。
-差距是因為連續用同 prompt，prefix cache 命中讓多數 run 跳過實際計算。
+In our initial benchmarking pass, rapid-mlx's prefill numbers were impressive (over 5,000 tps at 4K and over 100,000 tps at 8K). It turned out those numbers were artifacts of prefix-cache hits — the warm-up run cached the prompt prefix, and runs 2 through 5 reused the cached KV state instead of running prefill at all. The fix was launching with `--disable-prefix-cache`, after which rapid-mlx's prefill dropped to a more realistic 3,070 tps at 4K, behind omlx and mlx-vlm.
 
-→ **若你的場景重複 prompt 多**（system prompt 固定、user 變化少），rapid-mlx 啟用 prefix cache 後實際吞吐會遠超本表數據。
+This is worth noting because in production, your traffic *does* benefit from prefix caching when prompts share a system prefix or RAG header. So if your real workload has high prefix repetition (a fixed system message, for instance), rapid-mlx's effective prefill in production will be much higher than what this cold-cache benchmark shows. The cold numbers are the lower bound; the cached numbers are the upper bound.
 
-### 2.3 dflash 32K 崩盤的數字解析
+## Why dflash-mlx falls apart at 32K
 
-| 階段 | 64 tokens | 32K tokens | 變化 |
-|---|---:|---:|---:|
-| TTFT (ms) | 334 | 31,205 | **93×** |
-| Decode tps | 167.3 | 12.6 | **0.075×** |
-| 1 個 token 的攤銷成本 | 6 ms | 79 ms | 13× 變慢 |
+Speculative decoding wins by amortizing main-model forward passes across many proposed tokens. At short context this works because the draft model is much faster than the main model — running it once is cheap, and the verification batch through the main model accepts most of its proposals. But two things break at long context. First, the draft model has to ingest the full 32K prompt the same way the main model does, eliminating much of the cost asymmetry. Second, the draft's prediction accuracy degrades as context grows, because long context conditioning is fundamentally harder for a small model to handle. Failed predictions cost both a draft pass and a wasted main-model forward, plus the rollback work to recover.
 
-主要瓶頸：draft 模型 prefill 也要 32K，加上 verify 階段的多次主模型 forward 變得不再值得。
+The numbers are stark: at 64 tokens the per-decoded-token amortized cost was about 6 ms; at 32K it was 79 ms — a 13× slowdown in per-token cost for the same model on the same hardware. That's not a small regression; that's the speculative-decoding strategy ceasing to work.
 
-### 2.4 TTFT 對 RAG 應用的意義
+## TTFT matters for RAG
 
-長 context（16K+）TTFT 已經 4–13 秒，使用者必須等很久才看到第一個字。
-- omlx：32K → 12.7s（最快）
-- mlx-vlm：32K → 12.8s
-- rapid-mlx：32K → 13.3s
-- dflash：32K → 31.2s（**不可接受**）
+When context climbs into the 16K and beyond range, TTFT — the time before the first token streams to the user — becomes a real user-experience problem. At 32K, the best-case TTFT in our test was 12.7 seconds (omlx). For RAG applications, that's a long time to leave the user staring at a blank screen. The fix is partly UX (show a thinking indicator, stream the prompt back, or display partial retrieval results), but partly architectural — if your RAG pipeline pulls 32K of context per query, you should expect roughly 13 seconds of overhead before the model starts responding, and design accordingly.
 
-對 RAG 應用，建議搭配 streaming + 思考過程提示用戶系統正在處理，避免 12 秒空白。
+## Lessons from the methodology
 
----
+We learned a few things about how to benchmark these frameworks fairly that are worth documenting.
 
-## 三、決策樹（如何挑框架）
+**Prefix cache is a double-edged sword.** Our first pass produced impossible-looking prefill numbers because cached KV reuse was being measured. The fix is to disable prefix caching at server start (with the framework's specific flag), or alternatively to add a unique prefix to each prompt to defeat the cache. Just calling `/v1/cache/clear` between runs is *not* enough — we tried that and saw residual cache effects.
 
-```
-你的 context 多長？
-├── ≤ 512 tokens
-│   ├── 重視最快 decode → dflash-mlx
-│   └── 重視 TTFT → omlx 或 mlx-vlm
-├── 512 – 4,096 tokens
-│   ├── 內容可預測（程式碼/JSON） → dflash-mlx (@2K 有 160 tps 大幅加速)
-│   └── 內容多元 → omlx
-├── 4,096 – 16,384 tokens
-│   └── 一律 omlx（領先 12–15%）
-└── > 16,384 tokens
-    └── omlx 唯一選擇（dflash 崩盤、其他都慢 10%+）
+**Variance testing is mandatory at long context.** At short context (under 512 tokens) every framework's standard deviation across five runs was under 3 tps. Single-shot benchmarks are fine in that regime. But at 16K and beyond, real run-to-run variability appeared, and one-shot numbers can be misleading by 10–20%. The cost of doing five-run benchmarks (about 10 extra minutes per framework) is small compared to the cost of making a wrong decision based on noisy data.
 
-你需要視覺輸入嗎？
-└── 是 → mlx-vlm（唯一）
+**Qwen3's `/no_think` is honored inconsistently.** Of the four frameworks, only mlx-vlm and dflash-mlx fully suppressed the reasoning tokens. rapid-mlx and omlx still emitted `reasoning_content` chunks, and rapid-mlx specifically didn't even respect `max_tokens` for the thinking phase — we saw outputs as long as 2,155 tokens when we asked for 256. If you need strict thinking control, set `enable_thinking=false` through the chat-template parameters rather than relying on the in-prompt convention.
 
-你需要同機跑多個模型？
-└── 是 → omlx（內建 LRU 多模型管理）
+## What we'd test next
 
-你的 prompt 重複度高（system prompt 固定）？
-└── 啟用 rapid-mlx prefix cache，prefill 可達 5000+ tps
-```
+The most interesting follow-up is mlx-vlm with `--draft-kind dflash`. mlx-vlm has the strongest prefill in the mid-context range and dflash has the strongest short-context decode; combining them might give the best of both worlds, or might surface an interaction effect where neither speedup actually applies. We didn't have time for it in this round.
 
----
+Continuous-batching throughput under concurrent load is the second priority. Both rapid-mlx and omlx support it but we tested only single-sequence latency. Under realistic multi-user load, the gap between batched and non-batched frameworks will widen, and it's worth knowing by how much. dflash-mlx specifically does not benefit from batching, which means its short-context advantage might disappear in production.
 
-## 四、實驗的方法學發現
+KV-cache quantization is the third. rapid-mlx and mlx-vlm both support 4-bit and 8-bit KV caches; this should help long-context performance considerably, particularly for rapid-mlx which currently trails omlx at 32K. If quantized KV closes that gap, the framework choice for production starts looking different.
 
-### 4.1 Prefix cache 是雙面刃
-
-第一次測試出現 prefill tps 高達 100K+（35B 模型物理上不可能達到），原因是 **bench 的 warm-up 與重複 run 用同一 prompt**，啟用 prefix cache 後第二個 run 起完全略過 prefill。
-
-→ 正確做法：
-1. 測試框架若有 prefix cache 旗標，**啟動時就關掉**（rapid-mlx `--disable-prefix-cache`、omlx `--no-cache`）
-2. 或在每個 run 的 prompt 加唯一前綴打亂 cache
-3. **不要只清 cache（`/v1/cache/clear`）**——本測試發現多次清除後仍有殘留
-
-### 4.2 變異測試的價值
-
-短 context（≤512 tokens）所有框架的 decode stddev 都 < 3 tps。**單次測試就足夠**。
-但長 context（16K+）開始出現明顯抖動，例如：
-- omlx @16K：stddev 2.7 tps
-- dflash @32K：TTFT stddev 2,663 ms
-
-→ 長 context 場景**務必至少跑 3–5 次取中位數**，否則單次數據可能誤導 ±20%。
-
-### 4.3 `/no_think` 在 Qwen3 上的可靠性
-
-僅 mlx-vlm 與 dflash-mlx **完全不輸出 thinking tokens**（output 整齊維持 256）。
-rapid-mlx 與 omlx 仍會大量輸出 reasoning_content（rapid 甚至完全不受 max_tokens 限制，可達 2155 tokens）。
-
-→ 若評測需要嚴格控制 thinking 行為，建議改用 chat template 的 `enable_thinking=false` 參數，或在 client 端過濾 reasoning_content。
-
----
-
-## 五、未測試但值得做的後續
-
-1. **mlx-vlm + dflash 組合**——vlm 內建支援，可能同時拿 prefill 強項 + decode 加速
-2. **batched / continuous batching** 下的吞吐量比較——rapid 與 omlx 都支援
-3. **KV cache 量化**對 32K decode 的影響（rapid 與 mlx-vlm 都支援 4-bit/8-bit KV）
-4. **64K / 128K context** 的記憶體與速度極限
-5. **Dense 模型**（如 Qwen3-32B-Dense）下的相對排名
-6. **omlx prefix cache 實際命中**情況下的吞吐量（生產實境會受惠）
+Beyond 32K is the fourth — at 64K and 128K, KV-cache memory pressure (16 GB to 32 GB respectively for this model in fp16) starts to dominate, and the comparison becomes as much about memory management as about compute throughput. That's a different benchmark entirely, but it's a regime that's becoming more important for real applications.

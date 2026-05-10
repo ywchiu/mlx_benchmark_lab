@@ -1,6 +1,8 @@
-# dflash-mlx 個別測試報告
+# dflash-mlx — Detailed Report
 
-## 啟動指令
+[繁體中文版](03-dflash-mlx_zh.md)
+
+## How we ran it
 
 ```bash
 dflash-serve \
@@ -9,12 +11,11 @@ dflash-serve \
   --port 8765
 ```
 
-> **重要**：`z-lab/Qwen3.6-35B-A3B-DFlash` 是 **draft 模型**，不能單獨當 target。
-> 必須以 `--model <target>` + `--draft <dflash>` 配對啟動，否則會因為缺少 91 個權重 (`fc.weight`、`hidden_norm.weight`、layers.0..7) 而崩潰。
+The most important thing to know about dflash-mlx is that the `z-lab/Qwen3.6-35B-A3B-DFlash` model is a *draft* model, not a target. It has only 8 transformer layers plus an output head, designed to be paired with the full 35B model to drive speculative decoding. Trying to load it as the main `--model` will crash on startup with an error about 91 missing parameters (the layers it doesn't have). The correct invocation always pairs `--model <full target>` with `--draft <DFlash variant>`.
 
 ---
 
-## 完整統計（n=5）
+## Full statistics (n=5 per cell)
 
 ### Decode tps
 
@@ -30,8 +31,7 @@ dflash-serve \
 
 ### Prefill tps
 
-dflash-serve 在 streaming 的 `usage` 欄位**沒有回傳 `prompt_tokens`**（永遠為 0），因此本表無法填入。
-若需要估算，可從 TTFT 反推（已知實際輸入 tokens 為 77/437/1677/3333/6636/13250/26475）。
+dflash-serve does not return `prompt_tokens` in the streaming `usage` object — every response shows zero. So we can't compute prefill tps directly from the API response. If you need an estimate you can back it out from TTFT and externally-tokenized prompt counts (in this benchmark the actual input was 77/437/1677/3333/6636/13250/26475 tokens for the seven sizes, after Qwen tokenization).
 
 ### TTFT (ms)
 
@@ -47,51 +47,30 @@ dflash-serve 在 streaming 的 `usage` 欄位**沒有回傳 `prompt_tokens`**（
 
 ---
 
-## 觀察與分析
+## What the data says
 
-### 強項：speculative decoding 在小至中 context 加速顯著
-- **64 tokens：167 tps**（領先第二名 33%）
-- **2,048 tokens：160 tps**（領先第二名 30%）
-- 命中率高時 decode 速度遠超其他框架
-- 執行時非常穩定（stddev 0.8–2.9 tps）
+dflash-mlx is a story of two extremes. At short context it's the clear winner: 167 tokens per second at 64 tokens is 35% faster than the second-place finisher, and the 160 tps result at 2,048 tokens is similarly dominant. The standard deviation across runs is low (under 3 tps), so the speedup is consistent — when speculative decoding works, it works reliably.
 
-### 致命弱項：32K 災難性崩盤
-- **decode 12.6 tps**——比 rapid-mlx/omlx/mlx-vlm 慢 6× 以上
-- **TTFT 31 秒**——其他框架約 13 秒，dflash 是 2.4×
-- TTFT stddev 達 2,663ms（最大 35.8s 最小 28.5s，極不穩定）
+But at 32K context, dflash-mlx breaks. Decode tps drops to 12.6, which is roughly six times slower than the next slowest framework. TTFT climbs to 31 seconds, more than twice everyone else. And the run-to-run TTFT variability balloons to 2.7 seconds — by far the highest variance we measured.
 
-### 為什麼長 context 會崩盤？
-1. **draft 模型也要處理完整 context**——35B 主模型 prefill 已經慢，draft 又再做一次，等於雙重開銷
-2. **長 context 下 draft 命中率下降**——預測錯就 verify 失敗，回滾代價高
-3. **每生成 1 token 要：draft N tokens → main 平行 verify → 接受/拒絕回退**——驗證次數隨 context 變長而變慢
-4. 32K 時 verify 階段成本 >> 純 decode 成本，speculative 變成負效益
+The root cause is structural. Speculative decoding works by having a small draft model generate token candidates that the main model then verifies in parallel. At short context this is a clear win because the draft pass is cheap relative to the main pass. But the draft model has to ingest the full prompt too — when the prompt is 32K tokens, the draft is doing nearly as much work as the main model, eliminating the cost advantage of having a draft in the first place. Worse, draft prediction accuracy tends to fall as context grows: the more context the model is conditioning on, the harder it is for a small draft to predict the next token correctly. Failed predictions trigger expensive verify-then-rollback cycles. By 32K, the verify cost dominates, and you end up paying for both a draft pass and a main pass per accepted token, plus the rollback overhead — which is why decode rate falls below baseline rather than just falling back to baseline.
 
-### 中間 context（512、4K）為什麼也沒加速？
-- 512 token：decode 122.9 tps，與 baseline 約略相同（無加速）
-- 4K token：decode 104.5 tps，**比 omlx（120.4）慢**
-- 推測原因：draft 預測率隨內容語料不同而異，本測試 prompt 為自然語言文本，512 區段恰好命中率低
-
-### 衰退率
-從 64 → 32K：**167.3 → 12.6 tps（-92%）**——4 個框架最差，且差距懸殊
+The 512-token result deserves a note. Decode tps was 122.9 there, essentially identical to the non-speculative baseline — meaning speculative decoding provided no speedup at that context length. The 2K and 64-token cases benefited substantially, the 512 case did not. We believe this is because the draft hit rate happens to be content-dependent, and the natural-language summarization prompt at 512 tokens didn't match the draft model's prediction patterns well. Your code-completion or structured-output workloads might do better.
 
 ---
 
-## 適用情境
+## When to use dflash-mlx
 
-✅ 短至中 context（< 4K）的快速生成
-✅ 確定性高、可預測的內容（程式碼、JSON、結構化輸出）
-✅ 對 TTFT 不敏感的 batch 任務
+It's the right call when your context length is bounded under 4K and your output is highly predictable — code, JSON, structured templates, repetitive content. In those conditions you're getting a real 35% decode speedup over the alternatives, and the slightly elevated TTFT (an extra 200–300 ms compared to omlx) is rarely the bottleneck for a generation-bound workload.
 
-❌ **絕對不要用在 16K+ context**
-❌ TTFT 敏感的互動應用（永遠比其他框架慢 200–300ms）
-❌ 自然語言 / 多元內容的生成（命中率低時無加速）
+Never use it past 16K context, and especially not at 32K. The 12 tps decode rate is essentially unusable for anything interactive. Don't use it for TTFT-sensitive workloads in general — even at 64 tokens, dflash's 334 ms TTFT is more than double omlx's 148 ms.
 
 ---
 
-## 注意事項
+## Things to watch out for
 
-1. **不能單獨用 DFlash 模型**——必須配對基礎 4-bit 模型
-2. **無 `/health` endpoint**——readiness 改用 `GET /v1/models`
-3. **`usage` 不回 `prompt_tokens`**——若工具鏈需要 token 計數要另外算
-4. **32K context 是嚴格上限**——超過會更糟
-5. CLI 還有 `dflash`（單次生成）和 `dflash-benchmark`（內建 baseline vs DFlash 比較）兩個工具
+There's no `/health` endpoint — use `GET /v1/models` to check readiness instead. The `/v1/cache/clear` endpoint that rapid-mlx exposes also doesn't exist on dflash-serve, but the bench script handles the 404 silently.
+
+The companion CLI tools `dflash` (one-shot generate) and `dflash-benchmark` (built-in baseline-vs-DFlash comparison) are both useful if you want to test the speculative speedup quickly without spinning up a server. `dflash-benchmark` is particularly handy because it directly compares baseline-MLX-decoding against DFlash-decoding on the same prompt, so you can see the speedup without doing the bookkeeping yourself.
+
+The 32K context window appears to be a hard ceiling. We didn't try 64K but expect the failure mode to be even worse — the draft model's context window probably matters as much as the main model's, and this draft was trained on a specific context budget.

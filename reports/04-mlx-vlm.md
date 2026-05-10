@@ -1,6 +1,8 @@
-# mlx-vlm 個別測試報告
+# mlx-vlm — Detailed Report
 
-## 啟動指令
+[繁體中文版](04-mlx-vlm_zh.md)
+
+## How we ran it
 
 ```bash
 python3 -m mlx_vlm server \
@@ -8,12 +10,11 @@ python3 -m mlx_vlm server \
   --port 8765
 ```
 
-> mlx-vlm 是視覺語言模型（VLM）框架，本測試僅以純文字輸入測速。
-> 它支援 `--draft-model` + `--draft-kind dflash`，可以結合 dflash 加速（本次未測）。
+mlx-vlm is the vision-language-model framework in this set, which means its primary purpose is feeding images, video, or audio to multimodal models alongside text. We tested it with text-only input here, partly to keep the comparison fair (the other three frameworks are text-only) and partly because the Qwen3.6-35B-A3B-4bit model can run text-only requests through mlx-vlm's stack. Note that mlx-vlm also supports `--draft-model` with `--draft-kind dflash`, which would in theory combine vlm's strong prefill with dflash's decode speedup — we did not test this combination, but it's an obvious follow-up.
 
 ---
 
-## 完整統計（n=5）
+## Full statistics (n=5 per cell)
 
 ### Decode tps
 
@@ -53,59 +54,34 @@ python3 -m mlx_vlm server \
 
 ---
 
-## 觀察與分析
+## What the data says
 
-### 強項
-- **變異最低**：64–512 區間 decode stddev 僅 0.2 tps（極度穩定）
-- **Prefill 在 8K 達全測試最高**：3818 tps（贏過 omlx 的 3467 與 rapid 的 2696）
-- **Decode 衰退率最低**：64 → 32K 只衰退 -29%（曲線最平）
-- **TTFT 中位數低且穩定**：64 token 133ms（贏過 rapid 169 與 omlx 148）
-- **唯一支援多模態**：可吃 image / audio / video 輸入
+mlx-vlm has the lowest decode throughput across every context length we tested, sitting 25–30% behind the next slowest framework at short context and roughly 18% behind omlx at 32K. That's the cost of running through the vision-language stack even for text-only requests — there are tokenizer and processor layers in the inference pipeline that aren't strictly needed when the input is text.
 
-### 弱項
-- **Decode tps 全程墊底**：所有 context 都比另外三個框架慢 20–30%
-  - 64 tokens：95.5 tps，比 rapid 慢 24%
-  - 32K tokens：67.7 tps，比 omlx 慢 18%
-- VLM stack 為支援多模態的額外開銷，純文字場景不划算
+But it has two compensating strengths. First, the variability is exceptionally low. At 64 and 512 tokens the standard deviation across five runs is just 0.2 tps — the lowest of any framework we measured at any context length. If you're optimizing for predictability rather than peak speed, mlx-vlm is unusually consistent. Second, prefill is excellent. mlx-vlm hits the highest prefill rate of any framework at 8K context (3,818 tps), and it stays competitive with omlx through 32K. So while the per-token generation is slow, the per-token prompt ingestion is among the fastest.
 
-### 衰退率
-從 64 → 32K：**95.5 → 67.7 tps（-29%）**——4 個框架最緩
+The decode degradation curve is also the gentlest in this comparison: from 64 to 32K mlx-vlm loses only 29% of its baseline speed, slightly better than omlx's 34%. This is partly because the 64-token baseline was already low — there's less to lose — but the 32K result of 67.7 tps still puts it ahead of dflash-mlx and within striking distance of rapid-mlx (72.3).
+
+The 2,048-token cell shows higher variance (stddev 4.1 tps, min 83 max 93) than its neighbors — likely an artifact of one or two slower runs at that size. Excluding outliers, mlx-vlm is otherwise tightly bunched.
 
 ---
 
-## 適用情境
+## When to use mlx-vlm
 
-✅ **圖文 / 影音 / 文檔多模態應用**（無可替代）
-✅ 對變異敏感、需要可預測的響應時間
-✅ 中等 context（4K–8K）的純文字生成（decode 雖低但 prefill 強）
+The honest answer is: when you need vision, audio, or video input. None of the other three frameworks support those, so for any multimodal use case mlx-vlm is the only option in this set. The Qwen3.6-35B-A3B-4bit model used here is itself multimodal — its preprocessor configs include vision components — so feeding it images is a one-flag change to the request payload.
 
-❌ 純文字 + 高吞吐量需求（rapid/omlx/dflash 都更快）
-❌ 短互動 chat（其他框架 decode 快 25%）
+For pure text, mlx-vlm is hard to recommend over omlx unless you specifically value low variance over peak throughput. The 25–30% decode tps gap at short context is a real cost, and rapid-mlx, omlx, and dflash-mlx all beat it on absolute speed in their respective comfort zones.
 
----
-
-## 進階：mlx-vlm + DFlash 組合
-
-mlx-vlm 內建 `--draft-model` + `--draft-kind dflash` 支援，理論上可以同時得到：
-- mlx-vlm 的 prefill 強項
-- dflash 的小 context decode 加速
-
-```bash
-python3 -m mlx_vlm server \
-  --model mlx-community/Qwen3.6-35B-A3B-4bit \
-  --draft-model z-lab/Qwen3.6-35B-A3B-DFlash \
-  --draft-kind dflash \
-  --port 8765
-```
-
-**本次未測**——值得後續實驗。但要小心 32K 崩盤問題可能會繼承。
+The interesting middle ground is mlx-vlm's `--draft-kind dflash` support. If you have moderate context (under 8K) and predictable output, you might be able to combine mlx-vlm's strong prefill with dflash's decode speedup. This would test whether the speculative-decoding gains are additive with mlx-vlm's prefill efficiency, or whether one cancels the other out. We didn't measure this combination — it's the most interesting follow-up experiment from this round.
 
 ---
 
-## 注意事項
+## Things to watch out for
 
-1. 預設 port 8080，本測試手動指定 8765
-2. 預設 `prefill-step-size=2048`，長 prompt 會分批 prefill
-3. 沒有 `/health` endpoint，readiness 用 `GET /v1/models`
-4. CLI 用法：`python3 -m mlx_vlm server`（也可用 `mlx_vlm.generate` 做單次生成）
-5. 模型若有 vision components（如本測試的 Qwen3.6-35B-A3B-4bit 內含 `preprocessor_config.json`），可直接吃 image 輸入
+The default port is 8080, which collides with many other tools. We explicitly set 8765 for our benchmarks. There's no `/health` endpoint, so use `GET /v1/models` for readiness checks.
+
+The `--prefill-step-size` parameter (default 2048) controls how big each prefill batch is. For very long prompts you may want to tune this; smaller values use less memory but more wall-clock time. We used the default for our tests.
+
+mlx-vlm respects the `/no_think` Qwen3 convention more strictly than rapid-mlx and omlx do — output stayed at exactly 256 tokens (max_tokens), with no reasoning_content emitted. So if you need clean control over output length and content, mlx-vlm is the most well-behaved framework in this set.
+
+The CLI also exposes `python3 -m mlx_vlm generate` for one-shot inference and `python3 -m mlx_vlm convert` for model preparation. The streaming server at `python3 -m mlx_vlm server` is what we benchmarked. Note that the `mlx_vlm.generate` deprecation warning suggests using the new `mlx_vlm generate` form instead.

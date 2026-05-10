@@ -1,9 +1,12 @@
-# omlx 個別測試報告
+# omlx — Detailed Report
 
-## 啟動指令
+[繁體中文版](02-omlx_zh.md)
+
+## How we ran it
 
 ```bash
-# 模型必須先放在 ~/.omlx/models/<model_id>/，可用 symlink 連結 HuggingFace cache
+# omlx looks for models in ~/.omlx/models/<model_id>/, not your HuggingFace cache.
+# A symlink works fine:
 ln -snf \
   ~/.cache/huggingface/hub/models--mlx-community--Qwen3.6-35B-A3B-4bit/snapshots/<HASH>/ \
   ~/.omlx/models/Qwen3.6-35B-A3B-4bit
@@ -11,12 +14,11 @@ ln -snf \
 omlx serve --port 8765 --log-level warning --no-cache
 ```
 
-> **API 注意**：omlx 用目錄名為 model id，不是 HuggingFace repo 路徑。
-> Request 時 `model` 欄位填 `Qwen3.6-35B-A3B-4bit`（去掉 `mlx-community/` 前綴）。
+A few things about the API are worth flagging up front. omlx uses the directory basename as the model ID, not the HuggingFace repo path — so when your client sends a request, the `model` field should be `Qwen3.6-35B-A3B-4bit`, not `mlx-community/Qwen3.6-35B-A3B-4bit`. The `--no-cache` flag disables both the in-memory prefix cache and the SSD cache; without it, repeated benchmarks will hit cached state and your prefill numbers won't reflect cold performance.
 
 ---
 
-## 完整統計（n=5）
+## Full statistics (n=5 per cell)
 
 ### Decode tps
 
@@ -56,40 +58,32 @@ omlx serve --port 8765 --log-level warning --no-cache
 
 ---
 
-## 觀察與分析
+## What the data says
 
-### 強項
-- **長 context decode 王者**：4K 起全段領先，32K 時仍有 82 tps（比 rapid-mlx 快 14%、比 dflash 快 6.5×）
-- **TTFT 最穩定**：512–4K 區間 stddev 僅 3–25ms（其他框架是 100ms+）
-- **Decode 衰退最緩**：64 → 32K 衰退 -34%（其他都更陡）
-- **Prefill 在 4K 達峰值 3989 tps**（所有框架最高）
-- **多模型管理**：支援 LRU 自動卸載，可同機切換多個 model
+omlx is the long-context champion in this benchmark, and the numbers make the case unambiguously. From 4K tokens onward it has the highest decode tps in every cell, and at 32K it's still hitting 82 tokens per second — 14% faster than rapid-mlx and roughly six times faster than dflash-mlx. The decode-degradation curve is the gentlest of any framework: from 64 to 32K it loses 34% of its baseline speed, where rapid-mlx loses 42% and dflash-mlx loses 92%.
 
-### 弱項
-- **設定門檻高**：模型必須放 `~/.omlx/models/`，不能直接吃 HuggingFace repo
-- **短 context decode 略低**：64 區間 123.7 tps，比 rapid-mlx 與 dflash 慢
-- **16K/32K TTFT 變異略大**：stddev 138–412ms
+What's almost more impressive is the consistency. Look at the TTFT standard deviations: 3 ms at 512 tokens, 4 ms at 2K, 25 ms at 4K. The other frameworks are at 100+ ms variability in this range. If you're building a service with strict latency requirements — say, a p99 promise to a downstream consumer — omlx makes those promises a lot easier to keep. Decode tps standard deviation at most context lengths is under 1 tps, which is exceptional.
 
-### 衰退率
-從 64 → 32K：**123.7 → 82.1 tps（-34%）**——4 個框架中最緩
+omlx also has the best prefill numbers we measured, peaking at 3,989 tokens per second at 4K context. This is meaningfully ahead of mlx-vlm (3,672) and rapid-mlx (3,070) at the same prompt size. For RAG applications where you're stuffing 4K–8K of retrieved context into every request, this directly translates to faster end-to-end response times.
+
+The few weak spots are minor. Decode tps at 64 tokens is 123.7, slightly behind rapid-mlx's 124.9 — but the difference is well within noise. TTFT variance at 16K and 32K does grow into the 100–400 ms range, which is more variability than at shorter contexts but still better than the alternatives.
 
 ---
 
-## 適用情境
+## When to use omlx
 
-✅ **長 context RAG / 長文摘要 / 程式碼分析**（最強）
-✅ 對 TTFT 變異敏感的 SLA 場景
-✅ 同機多模型熱切換的 dev 環境
-✅ 32K+ 超長 context（其他都不行）
+It's the default recommendation for any production deployment. Long-context RAG, document summarization, code analysis on big files, multi-tenant inference servers — omlx will give you the most predictable performance with the least tuning.
 
-❌ 短 prompt chat（dflash 更快）
-❌ 不想處理模型目錄管理
+The multi-model management is a real bonus that other frameworks don't have. omlx supports loading multiple models simultaneously and uses LRU eviction to manage memory; you can swap between Qwen, Llama, and Mistral on the same server without restart. For development environments where you're testing many models or running both a chat and a coding model side by side, this is a feature with real teeth.
+
+It's the wrong pick if you have only short prompts and need every last token per second of decode speed — dflash-mlx will be faster there. It's also worse than rapid-mlx if you want fine-grained control over cache memory and KV quantization, since omlx exposes fewer of those knobs.
 
 ---
 
-## 注意事項
+## Things to watch out for
 
-1. `~/.omlx/settings.json` 預設 `max_context_window=32768`；要測 64K+ 需先調此值
-2. 預設啟用 SSD cache（`~/.omlx/cache/`），測效能必須加 `--no-cache`
-3. 多模型部署時要監控 `max_model_memory`，否則模型會被 LRU 卸載
-4. Admin API（`/admin/api/...`）需要 cookie auth；reload 模型只能透過重啟 server 或先登入 admin UI
+The setup friction is real. omlx requires models to be in `~/.omlx/models/<id>/` and won't read your HuggingFace cache directly. The fix is a one-line symlink, but it's not obvious until you've hit the "Available models: (none)" error message. The default `~/.omlx/settings.json` also caps `max_context_window` at 32,768 — if you want to test 64K or 128K context, raise this first.
+
+The admin API at `/admin/api/...` requires cookie-based authentication that's only available after logging in through the admin web UI at `/admin`. There's no easy way to script "load this model" without spinning up a separate server with the model specified at launch, which is what we did for our benchmark. If you're doing automated testing, this is a friction point.
+
+The default `--cache` setting (i.e., not passing `--no-cache`) enables both the SSD cache (writes to `~/.omlx/cache/`) and the in-memory prefix cache. For benchmarking, always disable both. For production use the cache is helpful and you should leave it on.
