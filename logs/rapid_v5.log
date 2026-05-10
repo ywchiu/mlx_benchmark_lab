@@ -1,0 +1,56 @@
+server=http://localhost:8765 model=mlx-community/Qwen3.6-35B-A3B-4bit sizes=[64, 512, 2048, 4096, 8192, 16384, 32768] runs=5 max_tokens=256
+[size=64] warm-up ... in=77 out=868 (7.3s)
+  run 1/5 ... TTFT 163ms  prefill 473  decode 124.9  in=77 out=868  total 7.1s
+  run 2/5 ... TTFT 462ms  prefill 167  decode 123.8  in=77 out=868  total 7.5s
+  run 3/5 ... TTFT 169ms  prefill 456  decode 125.3  in=77 out=868  total 7.1s
+  run 4/5 ... TTFT 163ms  prefill 473  decode 125.1  in=77 out=868  total 7.1s
+  run 5/5 ... TTFT 339ms  prefill 227  decode 124.5  in=77 out=868  total 7.3s
+[size=512] warm-up ... in=437 out=1567 (13.3s)
+  run 1/5 ... TTFT 268ms  prefill 1631  decode 118.0  in=437 out=1567  total 13.5s
+  run 2/5 ... TTFT 268ms  prefill 1634  decode 124.4  in=437 out=1567  total 12.9s
+  run 3/5 ... TTFT 426ms  prefill 1026  decode 119.1  in=437 out=1567  total 13.6s
+  run 4/5 ... TTFT 486ms  prefill 899  decode 121.8  in=437 out=1567  total 13.4s
+  run 5/5 ... TTFT 463ms  prefill 944  decode 119.5  in=437 out=1567  total 13.6s
+[size=2048] warm-up ... in=1677 out=1385 (13.1s)
+  run 1/5 ... TTFT 511ms  prefill 3279  decode 112.9  in=1677 out=1385  total 12.8s
+  run 2/5 ... TTFT 515ms  prefill 3259  decode 108.4  in=1677 out=1385  total 13.3s
+  run 3/5 ... TTFT 521ms  prefill 3221  decode 102.0  in=1677 out=1385  total 14.1s
+  run 4/5 ... TTFT 787ms  prefill 2130  decode 102.5  in=1677 out=1385  total 14.3s
+  run 5/5 ... TTFT 761ms  prefill 2204  decode 100.7  in=1677 out=1385  total 14.5s
+[size=4096] warm-up ... in=3333 out=916 (11.1s)
+  run 1/5 ... TTFT 1260ms  prefill 2644  decode 98.2  in=3333 out=916  total 10.6s
+  run 2/5 ... TTFT 1039ms  prefill 3207  decode 98.4  in=3333 out=916  total 10.4s
+  run 3/5 ... TTFT 1080ms  prefill 3087  decode 97.6  in=3333 out=916  total 10.5s
+  run 4/5 ... TTFT 1230ms  prefill 2709  decode 97.2  in=3333 out=916  total 10.7s
+  run 5/5 ... TTFT 1086ms  prefill 3070  decode 97.2  in=3333 out=916  total 10.5s
+[size=8192] warm-up ... in=6636 out=1636 (21.3s)
+  run 1/5 ... TTFT 2359ms  prefill 2814  decode 91.2  in=6636 out=1636  total 20.3s
+  run 2/5 ... TTFT 2580ms  prefill 2572  decode 89.5  in=6636 out=1636  total 20.9s
+  run 3/5 ... TTFT 2393ms  prefill 2773  decode 90.3  in=6636 out=1636  total 20.5s
+  run 4/5 ... TTFT 2484ms  prefill 2671  decode 91.7  in=6636 out=1636  total 20.3s
+  run 5/5 ... TTFT 2461ms  prefill 2696  decode 87.8  in=6636 out=1636  total 21.1s
+[size=16384] warm-up ... in=13250 out=1493 (23.9s)
+  run 1/5 ... TTFT 5703ms  prefill 2323  decode 83.4  in=13250 out=1493  total 23.6s
+  run 2/5 ... TTFT 6251ms  prefill 2120  decode 83.7  in=13250 out=1493  total 24.1s
+  run 3/5 ... TTFT 5741ms  prefill 2308  decode 83.2  in=13250 out=1493  total 23.7s
+  run 4/5 ... TTFT 5682ms  prefill 2332  decode 82.0  in=13250 out=1493  total 23.9s
+  run 5/5 ... TTFT 5656ms  prefill 2343  decode 82.2  in=13250 out=1493  total 23.8s
+[size=32768] warm-up ... in=26475 out=1577 (36.6s)
+  run 1/5 ... TTFT 13259ms  prefill 1997  decode 72.3  in=26475 out=1577  total 35.1s
+  run 2/5 ... TTFT 13207ms  prefill 2005  decode 72.7  in=26475 out=1577  total 34.9s
+  run 3/5 ... TTFT 13531ms  prefill 1957  decode 72.2  in=26475 out=1577  total 35.4s
+  run 4/5 ... TTFT 13326ms  prefill 1987  decode 72.4  in=26475 out=1577  total 35.1s
+  run 5/5 ... TTFT 13479ms  prefill 1964  decode 72.1  in=26475 out=1577  total 35.4s
+
+=== SUMMARY ===
+  size | decode tps (med/avg/std/min/max)               | prefill tps (med/avg/std/min/max)              | TTFT ms (med/avg/std/min/max)                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    64 | med=124.9 avg=124.7 std=0.6 min=123.8 max=125.3 | med=456 avg=359 std=150 min=167 max=473        | med=169 avg=259 std=136 min=163 max=462       
+   512 | med=119.5 avg=120.6 std=2.6 min=118.0 max=124.4 | med=1026 avg=1227 std=373 min=899 max=1634     | med=426 avg=382 std=107 min=268 max=486       
+  2048 | med=102.5 avg=105.3 std=5.2 min=100.7 max=112.9 | med=3221 avg=2819 std=596 min=2130 max=3279    | med=521 avg=619 std=142 min=511 max=787       
+  4096 | med=97.6 avg=97.7 std=0.5 min=97.2 max=98.4    | med=3070 avg=2943 std=250 min=2644 max=3207    | med=1086 avg=1139 std=99 min=1039 max=1260    
+  8192 | med=90.3 avg=90.1 std=1.6 min=87.8 max=91.7    | med=2696 avg=2705 std=94 min=2572 max=2814     | med=2461 avg=2455 std=86 min=2359 max=2580    
+ 16384 | med=83.2 avg=82.9 std=0.7 min=82.0 max=83.7    | med=2323 avg=2285 std=93 min=2120 max=2343     | med=5703 avg=5807 std=250 min=5656 max=6251   
+ 32768 | med=72.3 avg=72.3 std=0.2 min=72.1 max=72.7    | med=1987 avg=1982 std=21 min=1957 max=2005     | med=13326 avg=13361 std=140 min=13207 max=13531
+
+Note: reasoning_content was emitted despite /no_think — decode tps mixes thinking + visible tokens.

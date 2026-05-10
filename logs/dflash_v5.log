@@ -1,0 +1,54 @@
+server=http://localhost:8765 model=mlx-community/Qwen3.6-35B-A3B-4bit sizes=[64, 512, 2048, 4096, 8192, 16384, 32768] runs=5 max_tokens=256
+[size=64] warm-up ... in=0 out=256 (3.3s)
+  run 1/5 ... TTFT 332ms  prefill 0  decode 163.1  in=0 out=256  total 1.9s
+  run 2/5 ... TTFT 334ms  prefill 0  decode 166.6  in=0 out=256  total 1.9s
+  run 3/5 ... TTFT 328ms  prefill 0  decode 167.3  in=0 out=256  total 1.9s
+  run 4/5 ... TTFT 336ms  prefill 0  decode 168.5  in=0 out=256  total 1.9s
+  run 5/5 ... TTFT 371ms  prefill 0  decode 170.9  in=0 out=256  total 1.9s
+[size=512] warm-up ... in=0 out=256 (2.6s)
+  run 1/5 ... TTFT 360ms  prefill 0  decode 118.3  in=0 out=256  total 2.5s
+  run 2/5 ... TTFT 378ms  prefill 0  decode 123.3  in=0 out=256  total 2.5s
+  run 3/5 ... TTFT 357ms  prefill 0  decode 122.9  in=0 out=256  total 2.4s
+  run 4/5 ... TTFT 366ms  prefill 0  decode 123.5  in=0 out=256  total 2.4s
+  run 5/5 ... TTFT 360ms  prefill 0  decode 122.6  in=0 out=256  total 2.4s
+[size=2048] warm-up ... in=0 out=256 (2.5s)
+  run 1/5 ... TTFT 591ms  prefill 0  decode 153.8  in=0 out=256  total 2.3s
+  run 2/5 ... TTFT 585ms  prefill 0  decode 158.8  in=0 out=256  total 2.2s
+  run 3/5 ... TTFT 507ms  prefill 0  decode 160.1  in=0 out=256  total 2.1s
+  run 4/5 ... TTFT 588ms  prefill 0  decode 160.3  in=0 out=256  total 2.2s
+  run 5/5 ... TTFT 587ms  prefill 0  decode 160.5  in=0 out=256  total 2.2s
+[size=4096] warm-up ... in=0 out=256 (3.8s)
+  run 1/5 ... TTFT 1072ms  prefill 0  decode 104.5  in=0 out=256  total 3.5s
+  run 2/5 ... TTFT 1019ms  prefill 0  decode 104.6  in=0 out=256  total 3.5s
+  run 3/5 ... TTFT 1074ms  prefill 0  decode 103.5  in=0 out=256  total 3.5s
+  run 4/5 ... TTFT 1090ms  prefill 0  decode 103.9  in=0 out=256  total 3.6s
+  run 5/5 ... TTFT 1059ms  prefill 0  decode 105.6  in=0 out=256  total 3.5s
+[size=8192] warm-up ... in=0 out=256 (5.7s)
+  run 1/5 ... TTFT 2178ms  prefill 0  decode 96.3  in=0 out=256  total 4.8s
+  run 2/5 ... TTFT 2239ms  prefill 0  decode 96.3  in=0 out=256  total 4.9s
+  run 3/5 ... TTFT 2261ms  prefill 0  decode 95.5  in=0 out=256  total 4.9s
+  run 4/5 ... TTFT 2203ms  prefill 0  decode 97.9  in=0 out=256  total 4.8s
+  run 5/5 ... TTFT 2205ms  prefill 0  decode 93.6  in=0 out=256  total 4.9s
+[size=16384] warm-up ... in=0 out=256 (17.6s)
+  run 1/5 ... TTFT 5651ms  prefill 0  decode 88.0  in=0 out=256  total 8.6s
+  run 2/5 ... TTFT 5924ms  prefill 0  decode 84.1  in=0 out=256  total 9.0s
+  run 3/5 ... TTFT 6067ms  prefill 0  decode 85.1  in=0 out=256  total 9.1s
+  run 4/5 ... TTFT 6023ms  prefill 0  decode 82.9  in=0 out=256  total 9.1s
+  run 5/5 ... TTFT 6119ms  prefill 0  decode 81.7  in=0 out=256  total 9.3s
+[size=32768] warm-up ... in=0 out=256 (53.8s)
+  run 1/5 ... TTFT 35830ms  prefill 0  decode 11.3  in=0 out=256  total 58.4s
+  run 2/5 ... TTFT 31205ms  prefill 0  decode 12.6  in=0 out=256  total 51.5s
+  run 3/5 ... TTFT 31159ms  prefill 0  decode 12.1  in=0 out=256  total 52.3s
+  run 4/5 ... TTFT 32319ms  prefill 0  decode 13.6  in=0 out=256  total 51.2s
+  run 5/5 ... TTFT 28469ms  prefill 0  decode 14.5  in=0 out=256  total 46.1s
+
+=== SUMMARY ===
+  size | decode tps (med/avg/std/min/max)               | prefill tps (med/avg/std/min/max)              | TTFT ms (med/avg/std/min/max)                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    64 | med=167.3 avg=167.3 std=2.9 min=163.1 max=170.9 | med=0 avg=0 std=0 min=0 max=0                  | med=334 avg=340 std=17 min=328 max=371        
+   512 | med=122.9 avg=122.1 std=2.2 min=118.3 max=123.5 | med=0 avg=0 std=0 min=0 max=0                  | med=360 avg=364 std=8 min=357 max=378         
+  2048 | med=160.1 avg=158.7 std=2.8 min=153.8 max=160.5 | med=0 avg=0 std=0 min=0 max=0                  | med=587 avg=572 std=36 min=507 max=591        
+  4096 | med=104.5 avg=104.4 std=0.8 min=103.5 max=105.6 | med=0 avg=0 std=0 min=0 max=0                  | med=1072 avg=1063 std=27 min=1019 max=1090    
+  8192 | med=96.3 avg=95.9 std=1.6 min=93.6 max=97.9    | med=0 avg=0 std=0 min=0 max=0                  | med=2205 avg=2217 std=33 min=2178 max=2261    
+ 16384 | med=84.1 avg=84.4 std=2.4 min=81.7 max=88.0    | med=0 avg=0 std=0 min=0 max=0                  | med=6023 avg=5957 std=185 min=5651 max=6119   
+ 32768 | med=12.6 avg=12.8 std=1.3 min=11.3 max=14.5    | med=0 avg=0 std=0 min=0 max=0                  | med=31205 avg=31796 std=2663 min=28469 max=35830
