@@ -1,0 +1,7 @@
+{"size": 512, "prompt_tokens": 520, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 650.0, "decode_s": 2.1419, "total_s": 2.7919, "prefill_tps": 800.21, "decode_tps": 59.76, "peak_mem_gb": 15.58}
+{"size": 1024, "prompt_tokens": 1029, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 1170.0, "decode_s": 2.5827, "total_s": 3.7527, "prefill_tps": 879.06, "decode_tps": 49.56, "peak_mem_gb": 16.18}
+{"size": 2048, "prompt_tokens": 2047, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 2840.0, "decode_s": 2.2989, "total_s": 5.1389, "prefill_tps": 720.81, "decode_tps": 55.69, "peak_mem_gb": 17.29}
+{"size": 4096, "prompt_tokens": 4094, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 5900.0, "decode_s": 2.9576, "total_s": 8.8576, "prefill_tps": 693.90, "decode_tps": 43.28, "peak_mem_gb": 17.73}
+{"size": 8192, "prompt_tokens": 8191, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 12320.0, "decode_s": 2.9706, "total_s": 15.2906, "prefill_tps": 664.82, "decode_tps": 43.09, "peak_mem_gb": 18.37}
+{"size": 16384, "prompt_tokens": 16393, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 25350.0, "decode_s": 3.0918, "total_s": 28.4418, "prefill_tps": 646.68, "decode_tps": 41.40, "peak_mem_gb": 19.62}
+{"size": 32768, "prompt_tokens": 32771, "completion_tokens": 128, "think": 0, "vis": 128, "ttft_ms": 61740.0, "decode_s": 4.0842, "total_s": 65.8242, "prefill_tps": 530.79, "decode_tps": 31.34, "peak_mem_gb": 22.12}

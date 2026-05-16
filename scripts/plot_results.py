@@ -28,12 +28,14 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
 FRAMEWORKS = [
-    ("rapid-mlx", "rapid_v5.jsonl",  "#1f77b4", "o"),
-    ("omlx",      "omlx_v5.jsonl",   "#2ca02c", "s"),
-    ("dflash-mlx","dflash_v5.jsonl", "#d62728", "^"),
-    ("mlx-vlm",   "vlm_v5.jsonl",    "#ff7f0e", "D"),
+    ("rapid-mlx", "rapid_v5.jsonl",  "#1f77b4", "o", "-"),
+    ("omlx",      "omlx_v5.jsonl",   "#2ca02c", "s", "-"),
+    ("dflash-mlx","dflash_v5.jsonl", "#d62728", "^", "-"),
+    ("mlx-vlm",   "vlm_v5.jsonl",    "#ff7f0e", "D", "-"),
+    ("mtplx*",    "mtplx_v5.jsonl",  "#9467bd", "v", "--"),
 ]
-SIZES = [64, 512, 2048, 4096, 8192, 16384, 32768]
+MULTI_RUN = {"rapid-mlx", "omlx", "dflash-mlx", "mlx-vlm"}
+SIZES = [64, 512, 1024, 2048, 4096, 8192, 16384, 32768]
 
 LABELS = {
     "en": {
@@ -46,8 +48,8 @@ LABELS = {
         "ttft_y":        "TTFT (ms, log scale)",
         "box_title":     "Decode tps distribution (n=5 per cell)",
         "box_y":         "decode tps",
-        "deg_title":     "Decode degradation (baseline = each framework's tps at 64 tokens)",
-        "deg_y":         "Decode tps (% of 64-token baseline)",
+        "deg_title":     "Decode degradation (baseline = each framework's tps at its smallest tested context)",
+        "deg_y":         "Decode tps (% of own baseline)",
         "std_title":     "Decode stability (lower stddev = more stable)",
         "std_y":         "Decode tps stddev",
     },
@@ -61,8 +63,8 @@ LABELS = {
         "ttft_y":        "TTFT (ms, log scale)",
         "box_title":     "Decode tps 變異分佈（n=5/each）",
         "box_y":         "decode tps",
-        "deg_title":     "Decode 速度衰退曲線（基準 = 各框架在 64 tokens 的速度）",
-        "deg_y":         "Decode tps（相對於 64-token 基準的 %）",
+        "deg_title":     "Decode 速度衰退曲線（基準 = 各框架自己最小脈絡的速度）",
+        "deg_y":         "Decode tps（相對於各自基準的 %）",
         "std_title":     "Decode 速度穩定性（stddev 越低越穩定）",
         "std_y":         "Decode tps stddev",
     },
@@ -85,7 +87,7 @@ def median_for(rows, key):
 
 def plot_metric(charts_dir, L, metric_key, title_key, ylabel_key, fname, log_y=False):
     fig, ax = plt.subplots(figsize=(9, 5.4))
-    for name, fn, color, marker in FRAMEWORKS:
+    for name, fn, color, marker, ls in FRAMEWORKS:
         data = load(DATA / fn)
         x, y = [], []
         for sz in SIZES:
@@ -94,7 +96,8 @@ def plot_metric(charts_dir, L, metric_key, title_key, ylabel_key, fname, log_y=F
                 x.append(sz)
                 y.append(v)
         if x:
-            ax.plot(x, y, marker=marker, color=color, label=name, linewidth=2, markersize=7)
+            ax.plot(x, y, marker=marker, color=color, label=name,
+                    linewidth=2, markersize=7, linestyle=ls)
     ax.set_xscale("log", base=2)
     if log_y:
         ax.set_yscale("log")
@@ -114,17 +117,21 @@ def plot_metric(charts_dir, L, metric_key, title_key, ylabel_key, fname, log_y=F
 def plot_decode_box(charts_dir, L):
     fig, axes = plt.subplots(2, 4, figsize=(15, 7), sharey=False)
     axes = axes.flatten()
-    all_data = {name: load(DATA / fn) for name, fn, *_ in FRAMEWORKS}
+    multi_run = [f for f in FRAMEWORKS if f[0] in MULTI_RUN]
+    all_data = {name: load(DATA / fn) for name, fn, *_ in multi_run}
 
     for i, sz in enumerate(SIZES):
         ax = axes[i]
         bp_data, labels, colors = [], [], []
-        for name, _, color, _ in FRAMEWORKS:
+        for name, _, color, *_ in multi_run:
             vals = [r["decode_tps"] for r in all_data[name][sz] if r.get("decode_tps", 0) > 0]
             if vals:
                 bp_data.append(vals)
                 labels.append(name.replace("-mlx", "").replace("mlx-", ""))
                 colors.append(color)
+        if not bp_data:
+            ax.axis("off")
+            continue
         bp = ax.boxplot(bp_data, tick_labels=labels, patch_artist=True, widths=0.6)
         for patch, c in zip(bp["boxes"], colors):
             patch.set_facecolor(c)
@@ -134,7 +141,6 @@ def plot_decode_box(charts_dir, L):
         ax.grid(True, alpha=0.3, axis="y")
         ax.tick_params(axis="x", labelsize=8)
 
-    axes[7].axis("off")
     fig.suptitle(L["box_title"], fontsize=14)
     fig.tight_layout()
     fig.savefig(charts_dir / "decode_box.png")
@@ -144,9 +150,14 @@ def plot_decode_box(charts_dir, L):
 
 def plot_degradation(charts_dir, L):
     fig, ax = plt.subplots(figsize=(9, 5.4))
-    for name, fn, color, marker in FRAMEWORKS:
+    for name, fn, color, marker, ls in FRAMEWORKS:
         data = load(DATA / fn)
-        baseline = median_for(data[SIZES[0]], "decode_tps")
+        baseline = None
+        for sz in SIZES:
+            v = median_for(data[sz], "decode_tps")
+            if v:
+                baseline = v
+                break
         if not baseline:
             continue
         x, y = [], []
@@ -155,7 +166,8 @@ def plot_degradation(charts_dir, L):
             if v:
                 x.append(sz)
                 y.append(v / baseline * 100)
-        ax.plot(x, y, marker=marker, color=color, label=name, linewidth=2, markersize=7)
+        ax.plot(x, y, marker=marker, color=color, label=name,
+                linewidth=2, markersize=7, linestyle=ls)
     ax.set_xscale("log", base=2)
     ax.set_xticks(SIZES)
     ax.set_xticklabels([f"{s:,}" for s in SIZES], rotation=15)
@@ -173,8 +185,10 @@ def plot_degradation(charts_dir, L):
 
 def plot_decode_stddev(charts_dir, L):
     fig, ax = plt.subplots(figsize=(9, 5.4))
-    width = 0.2
-    for i, (name, fn, color, _) in enumerate(FRAMEWORKS):
+    multi_run = [f for f in FRAMEWORKS if f[0] in MULTI_RUN]
+    n = len(multi_run)
+    width = 0.8 / n
+    for i, (name, fn, color, *_) in enumerate(multi_run):
         data = load(DATA / fn)
         stds = []
         for sz in SIZES:
@@ -182,7 +196,7 @@ def plot_decode_stddev(charts_dir, L):
             stds.append(statistics.stdev(vals) if len(vals) > 1 else 0)
         xs = [j + i * width for j in range(len(SIZES))]
         ax.bar(xs, stds, width=width, color=color, label=name, alpha=0.8)
-    ax.set_xticks([j + 1.5 * width for j in range(len(SIZES))])
+    ax.set_xticks([j + (n - 1) / 2 * width for j in range(len(SIZES))])
     ax.set_xticklabels([f"{s:,}" for s in SIZES], rotation=15)
     ax.set_xlabel(L["x_context"])
     ax.set_ylabel(L["std_y"])
