@@ -1,0 +1,632 @@
+2026-05-26 00:38:12 [dflash] loading model on generation worker thread...
+2026-05-26 00:38:16,021 - INFO - HTTP Request: GET https://huggingface.co/api/models/mlx-community/Qwen3.6-35B-A3B-4bit/revision/main "HTTP/1.1 200 OK"
+2026-05-26 00:38:17,038 - INFO - HTTP Request: GET https://huggingface.co/api/models/z-lab/Qwen3.6-35B-A3B-DFlash/revision/main "HTTP/1.1 200 OK"
++-------------------------------------------------------+
+| DFlash v0.1.7 - speculative decoding engine           |
+| Target:       mlx-community/Qwen3.6-35B-A3B-4bit      |
+| Draft:        z-lab/Qwen3.6-35B-A3B-DFlash (explicit) |
+| Draft quant:  w4 (model_default)                      |
+| Draft dtype:  checkpoint                              |
+| Mode:         DFlash (speculative decoding active)    |
+| Thinking:     disabled                                |
+| Fast path:    off                                     |
+| Prefix cache: disabled (--no-prefix-cache)            |
+| Target FA KV: full KV                                 |
+| Server:       mlx_lm.server on port 8765              |
+| Runtime:      default                                 |
+| Prefill step: 2048                                    |
+| Draft cache:  sink=64 window=1024                     |
+| Verify cap:   block                                   |
+| Clear cache:  boundary                                |
+| L1 cache:     off entries=8 bytes=8.0 GiB             |
+| L2 cache:     off                                     |
+| Max snapshot: 32000                                   |
+| Waterfall:    off                                     |
+| Diagnostics:  off                                     |
+| Diagnostics dir: off                                  |
+| Verify mode:  adaptive                                |
+| Wired limit: auto -> 51.8 GiB                         |
+| Cache limit: 4.0 GiB -> 4.0 GiB                       |
++-------------------------------------------------------+
+2026-05-26 00:38:18,792 - INFO - Starting httpd at 127.0.0.1 on port 8765...
+127.0.0.1 - - [26/May/2026 00:38:20] "GET /v1/models HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 00:38:39] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:38:39] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:38:39 [dflash] prefill: 78/79 tokens | 0.3s
+2026-05-26 00:38:39,500 - INFO - Prompt processing progress: 78/79
+2026-05-26 00:38:39 [dflash] prefill: 79/79 tokens | 0.3s
+2026-05-26 00:38:39,510 - INFO - Prompt processing progress: 79/79
+2026-05-26 00:38:41 [dflash] decode 146.1 tok/s | prefill logical 237.4 tok/s | prefill real 237.4 tok/s | prefill restored 0.0 tok/s | 63.3% accepted | 256 tokens | 2.1s | prompt: 79 tokens
+2026-05-26 00:38:41 [dflash] req#1 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.01 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:39:41] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:39:41] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:39:41 [dflash] prefill: 78/79 tokens | 0.4s
+2026-05-26 00:39:41,693 - INFO - Prompt processing progress: 78/79
+2026-05-26 00:39:41 [dflash] prefill: 79/79 tokens | 0.4s
+2026-05-26 00:39:41,702 - INFO - Prompt processing progress: 79/79
+2026-05-26 00:39:43 [dflash] decode 148.8 tok/s | prefill logical 182.9 tok/s | prefill real 182.9 tok/s | prefill restored 0.0 tok/s | 63.3% accepted | 256 tokens | 2.2s | prompt: 79 tokens
+2026-05-26 00:39:43 [dflash] req#2 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.01 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:40:43] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:40:43] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:40:43 [dflash] prefill: 78/79 tokens | 0.5s
+2026-05-26 00:40:43,899 - INFO - Prompt processing progress: 78/79
+2026-05-26 00:40:43 [dflash] prefill: 79/79 tokens | 0.5s
+2026-05-26 00:40:43,909 - INFO - Prompt processing progress: 79/79
+2026-05-26 00:40:45 [dflash] decode 145.0 tok/s | prefill logical 166.5 tok/s | prefill real 166.5 tok/s | prefill restored 0.0 tok/s | 63.3% accepted | 256 tokens | 2.2s | prompt: 79 tokens
+2026-05-26 00:40:45 [dflash] req#3 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.01 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:41:45] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:41:45] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:41:46 [dflash] prefill: 78/79 tokens | 0.4s
+2026-05-26 00:41:46,124 - INFO - Prompt processing progress: 78/79
+2026-05-26 00:41:46 [dflash] prefill: 79/79 tokens | 0.4s
+2026-05-26 00:41:46,133 - INFO - Prompt processing progress: 79/79
+2026-05-26 00:41:47 [dflash] decode 146.8 tok/s | prefill logical 176.5 tok/s | prefill real 176.5 tok/s | prefill restored 0.0 tok/s | 63.3% accepted | 256 tokens | 2.2s | prompt: 79 tokens
+2026-05-26 00:41:47 [dflash] req#4 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.01 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:42:47] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:42:47] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:42:48 [dflash] prefill: 78/79 tokens | 0.4s
+2026-05-26 00:42:48,315 - INFO - Prompt processing progress: 78/79
+2026-05-26 00:42:48 [dflash] prefill: 79/79 tokens | 0.4s
+2026-05-26 00:42:48,324 - INFO - Prompt processing progress: 79/79
+2026-05-26 00:42:50 [dflash] decode 149.4 tok/s | prefill logical 183.6 tok/s | prefill real 183.6 tok/s | prefill restored 0.0 tok/s | 63.3% accepted | 256 tokens | 2.1s | prompt: 79 tokens
+2026-05-26 00:42:50 [dflash] req#5 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.01 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:43:50] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:43:50] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:43:50 [dflash] prefill: 78/79 tokens | 0.4s
+2026-05-26 00:43:50,465 - INFO - Prompt processing progress: 78/79
+2026-05-26 00:43:50 [dflash] prefill: 79/79 tokens | 0.4s
+2026-05-26 00:43:50,473 - INFO - Prompt processing progress: 79/79
+2026-05-26 00:43:52 [dflash] decode 148.6 tok/s | prefill logical 187.8 tok/s | prefill real 187.8 tok/s | prefill restored 0.0 tok/s | 63.3% accepted | 256 tokens | 2.1s | prompt: 79 tokens
+2026-05-26 00:43:52 [dflash] req#6 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.01 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:43:52] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:43:52] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:43:52 [dflash] prefill: 438/439 tokens | 0.3s
+2026-05-26 00:43:52,459 - INFO - Prompt processing progress: 438/439
+2026-05-26 00:43:52 [dflash] prefill: 439/439 tokens | 0.3s
+2026-05-26 00:43:52,469 - INFO - Prompt processing progress: 439/439
+2026-05-26 00:43:54 [dflash] decode 139.0 tok/s | prefill logical 1632.8 tok/s | prefill real 1632.8 tok/s | prefill restored 0.0 tok/s | 61.7% accepted | 256 tokens | 2.1s | prompt: 439 tokens
+2026-05-26 00:43:54 [dflash] req#7 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.45 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:44:54] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:44:54] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:44:54 [dflash] prefill: 438/439 tokens | 0.5s
+2026-05-26 00:44:54,855 - INFO - Prompt processing progress: 438/439
+2026-05-26 00:44:54 [dflash] prefill: 439/439 tokens | 0.5s
+2026-05-26 00:44:54,865 - INFO - Prompt processing progress: 439/439
+2026-05-26 00:44:56 [dflash] decode 134.6 tok/s | prefill logical 806.2 tok/s | prefill real 806.2 tok/s | prefill restored 0.0 tok/s | 61.7% accepted | 256 tokens | 2.4s | prompt: 439 tokens
+2026-05-26 00:44:56 [dflash] req#8 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.45 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:45:56] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:45:56] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:45:57 [dflash] prefill: 438/439 tokens | 0.5s
+2026-05-26 00:45:57,306 - INFO - Prompt processing progress: 438/439
+2026-05-26 00:45:57 [dflash] prefill: 439/439 tokens | 0.5s
+2026-05-26 00:45:57,316 - INFO - Prompt processing progress: 439/439
+2026-05-26 00:45:59 [dflash] decode 140.0 tok/s | prefill logical 818.8 tok/s | prefill real 818.8 tok/s | prefill restored 0.0 tok/s | 61.7% accepted | 256 tokens | 2.4s | prompt: 439 tokens
+2026-05-26 00:45:59 [dflash] req#9 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.45 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:46:59] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:46:59] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:46:59 [dflash] prefill: 438/439 tokens | 0.5s
+2026-05-26 00:46:59,699 - INFO - Prompt processing progress: 438/439
+2026-05-26 00:46:59 [dflash] prefill: 439/439 tokens | 0.6s
+2026-05-26 00:46:59,709 - INFO - Prompt processing progress: 439/439
+2026-05-26 00:47:01 [dflash] decode 138.6 tok/s | prefill logical 787.3 tok/s | prefill real 787.3 tok/s | prefill restored 0.0 tok/s | 61.7% accepted | 256 tokens | 2.4s | prompt: 439 tokens
+2026-05-26 00:47:01 [dflash] req#10 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.45 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:48:01] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:48:01] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:48:02 [dflash] prefill: 438/439 tokens | 0.6s
+2026-05-26 00:48:02,126 - INFO - Prompt processing progress: 438/439
+2026-05-26 00:48:02 [dflash] prefill: 439/439 tokens | 0.6s
+2026-05-26 00:48:02,137 - INFO - Prompt processing progress: 439/439
+2026-05-26 00:48:03 [dflash] decode 139.4 tok/s | prefill logical 768.4 tok/s | prefill real 768.4 tok/s | prefill restored 0.0 tok/s | 61.7% accepted | 256 tokens | 2.4s | prompt: 439 tokens
+2026-05-26 00:48:03 [dflash] req#11 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.45 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:49:03] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:49:04] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:49:04 [dflash] prefill: 438/439 tokens | 0.5s
+2026-05-26 00:49:04,496 - INFO - Prompt processing progress: 438/439
+2026-05-26 00:49:04 [dflash] prefill: 439/439 tokens | 0.5s
+2026-05-26 00:49:04,507 - INFO - Prompt processing progress: 439/439
+2026-05-26 00:49:06 [dflash] decode 138.8 tok/s | prefill logical 840.1 tok/s | prefill real 840.1 tok/s | prefill restored 0.0 tok/s | 61.7% accepted | 256 tokens | 2.4s | prompt: 439 tokens
+2026-05-26 00:49:06 [dflash] req#12 mlx_active=19.78 mlx_cache=0.00 mlx_peak=20.45 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:49:06] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:49:06] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:49:06 [dflash] prefill: 1678/1679 tokens | 0.5s
+2026-05-26 00:49:06,829 - INFO - Prompt processing progress: 1678/1679
+2026-05-26 00:49:06 [dflash] prefill: 1679/1679 tokens | 0.5s
+2026-05-26 00:49:06,846 - INFO - Prompt processing progress: 1679/1679
+2026-05-26 00:49:08 [dflash] decode 154.3 tok/s | prefill logical 3419.7 tok/s | prefill real 3419.7 tok/s | prefill restored 0.0 tok/s | 67.0% accepted | 224 tokens | 1.9s | prompt: 1679 tokens
+2026-05-26 00:49:08 [dflash] req#13 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.44 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:50:08] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:50:08] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:50:09 [dflash] prefill: 1678/1679 tokens | 0.7s
+2026-05-26 00:50:09,058 - INFO - Prompt processing progress: 1678/1679
+2026-05-26 00:50:09 [dflash] prefill: 1679/1679 tokens | 0.8s
+2026-05-26 00:50:09,070 - INFO - Prompt processing progress: 1679/1679
+2026-05-26 00:50:10 [dflash] decode 154.6 tok/s | prefill logical 2212.0 tok/s | prefill real 2212.0 tok/s | prefill restored 0.0 tok/s | 67.0% accepted | 224 tokens | 2.2s | prompt: 1679 tokens
+2026-05-26 00:50:10 [dflash] req#14 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.44 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:51:10] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:51:10] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:51:11 [dflash] prefill: 1678/1679 tokens | 0.7s
+2026-05-26 00:51:11,263 - INFO - Prompt processing progress: 1678/1679
+2026-05-26 00:51:11 [dflash] prefill: 1679/1679 tokens | 0.7s
+2026-05-26 00:51:11,274 - INFO - Prompt processing progress: 1679/1679
+2026-05-26 00:51:12 [dflash] decode 154.3 tok/s | prefill logical 2263.4 tok/s | prefill real 2263.4 tok/s | prefill restored 0.0 tok/s | 67.0% accepted | 224 tokens | 2.2s | prompt: 1679 tokens
+2026-05-26 00:51:12 [dflash] req#15 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.44 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:52:12] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:52:12] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:52:13 [dflash] prefill: 1678/1679 tokens | 0.7s
+2026-05-26 00:52:13,474 - INFO - Prompt processing progress: 1678/1679
+2026-05-26 00:52:13 [dflash] prefill: 1679/1679 tokens | 0.7s
+2026-05-26 00:52:13,486 - INFO - Prompt processing progress: 1679/1679
+2026-05-26 00:52:14 [dflash] decode 153.5 tok/s | prefill logical 2255.3 tok/s | prefill real 2255.3 tok/s | prefill restored 0.0 tok/s | 67.0% accepted | 224 tokens | 2.2s | prompt: 1679 tokens
+2026-05-26 00:52:14 [dflash] req#16 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.44 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:53:14] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:53:15] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:53:15 [dflash] prefill: 1678/1679 tokens | 0.7s
+2026-05-26 00:53:15,684 - INFO - Prompt processing progress: 1678/1679
+2026-05-26 00:53:15 [dflash] prefill: 1679/1679 tokens | 0.7s
+2026-05-26 00:53:15,696 - INFO - Prompt processing progress: 1679/1679
+2026-05-26 00:53:17 [dflash] decode 154.3 tok/s | prefill logical 2276.1 tok/s | prefill real 2276.1 tok/s | prefill restored 0.0 tok/s | 67.0% accepted | 224 tokens | 2.2s | prompt: 1679 tokens
+2026-05-26 00:53:17 [dflash] req#17 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.44 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:54:17] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:54:17] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:54:17 [dflash] prefill: 1678/1679 tokens | 0.7s
+2026-05-26 00:54:17,911 - INFO - Prompt processing progress: 1678/1679
+2026-05-26 00:54:17 [dflash] prefill: 1679/1679 tokens | 0.8s
+2026-05-26 00:54:17,922 - INFO - Prompt processing progress: 1679/1679
+2026-05-26 00:54:19 [dflash] decode 154.7 tok/s | prefill logical 2203.0 tok/s | prefill real 2203.0 tok/s | prefill restored 0.0 tok/s | 67.0% accepted | 224 tokens | 2.2s | prompt: 1679 tokens
+2026-05-26 00:54:19 [dflash] req#18 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.44 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:54:19] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:54:19] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:54:19 [dflash] prefill: 2048/3335 tokens | 0.5s
+2026-05-26 00:54:19,904 - INFO - Prompt processing progress: 2048/3335
+2026-05-26 00:54:20 [dflash] prefill: 3334/3335 tokens | 0.8s
+2026-05-26 00:54:20,222 - INFO - Prompt processing progress: 3334/3335
+2026-05-26 00:54:20 [dflash] prefill: 3335/3335 tokens | 0.9s
+2026-05-26 00:54:20,234 - INFO - Prompt processing progress: 3335/3335
+2026-05-26 00:54:22 [dflash] decode 127.2 tok/s | prefill logical 3877.9 tok/s | prefill real 3877.9 tok/s | prefill restored 0.0 tok/s | 59.0% accepted | 256 tokens | 2.9s | prompt: 3335 tokens
+2026-05-26 00:54:22 [dflash] req#19 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.77 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:55:22] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:55:22] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:55:22 [dflash] prefill: 2048/3335 tokens | 0.7s
+2026-05-26 00:55:22,975 - INFO - Prompt processing progress: 2048/3335
+2026-05-26 00:55:23 [dflash] prefill: 3334/3335 tokens | 1.0s
+2026-05-26 00:55:23,292 - INFO - Prompt processing progress: 3334/3335
+2026-05-26 00:55:23 [dflash] prefill: 3335/3335 tokens | 1.0s
+2026-05-26 00:55:23,304 - INFO - Prompt processing progress: 3335/3335
+2026-05-26 00:55:25 [dflash] decode 127.5 tok/s | prefill logical 3211.3 tok/s | prefill real 3211.3 tok/s | prefill restored 0.0 tok/s | 59.0% accepted | 256 tokens | 3.0s | prompt: 3335 tokens
+2026-05-26 00:55:25 [dflash] req#20 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.77 rss_now=20.05 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 00:56:25] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:56:25] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:56:26 [dflash] prefill: 2048/3335 tokens | 0.8s
+2026-05-26 00:56:26,112 - INFO - Prompt processing progress: 2048/3335
+2026-05-26 00:56:26 [dflash] prefill: 3334/3335 tokens | 1.1s
+2026-05-26 00:56:26,430 - INFO - Prompt processing progress: 3334/3335
+2026-05-26 00:56:26 [dflash] prefill: 3335/3335 tokens | 1.1s
+2026-05-26 00:56:26,442 - INFO - Prompt processing progress: 3335/3335
+2026-05-26 00:56:28 [dflash] decode 127.8 tok/s | prefill logical 2999.5 tok/s | prefill real 2999.5 tok/s | prefill restored 0.0 tok/s | 59.0% accepted | 256 tokens | 3.1s | prompt: 3335 tokens
+2026-05-26 00:56:28 [dflash] req#21 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.77 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:57:28] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:57:28] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:57:29 [dflash] prefill: 2048/3335 tokens | 0.8s
+2026-05-26 00:57:29,250 - INFO - Prompt processing progress: 2048/3335
+2026-05-26 00:57:29 [dflash] prefill: 3334/3335 tokens | 1.1s
+2026-05-26 00:57:29,570 - INFO - Prompt processing progress: 3334/3335
+2026-05-26 00:57:29 [dflash] prefill: 3335/3335 tokens | 1.1s
+2026-05-26 00:57:29,583 - INFO - Prompt processing progress: 3335/3335
+2026-05-26 00:57:31 [dflash] decode 127.6 tok/s | prefill logical 2981.3 tok/s | prefill real 2981.3 tok/s | prefill restored 0.0 tok/s | 59.0% accepted | 256 tokens | 3.1s | prompt: 3335 tokens
+2026-05-26 00:57:31 [dflash] req#22 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.77 rss_now=20.05 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 00:58:31] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:58:31] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:58:32 [dflash] prefill: 2048/3335 tokens | 0.8s
+2026-05-26 00:58:32,395 - INFO - Prompt processing progress: 2048/3335
+2026-05-26 00:58:32 [dflash] prefill: 3334/3335 tokens | 1.1s
+2026-05-26 00:58:32,713 - INFO - Prompt processing progress: 3334/3335
+2026-05-26 00:58:32 [dflash] prefill: 3335/3335 tokens | 1.1s
+2026-05-26 00:58:32,726 - INFO - Prompt processing progress: 3335/3335
+2026-05-26 00:58:34 [dflash] decode 127.5 tok/s | prefill logical 2982.8 tok/s | prefill real 2982.8 tok/s | prefill restored 0.0 tok/s | 59.0% accepted | 256 tokens | 3.1s | prompt: 3335 tokens
+2026-05-26 00:58:34 [dflash] req#23 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.77 rss_now=20.05 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 00:59:34] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:59:34] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:59:35 [dflash] prefill: 2048/3335 tokens | 0.8s
+2026-05-26 00:59:35,532 - INFO - Prompt processing progress: 2048/3335
+2026-05-26 00:59:35 [dflash] prefill: 3334/3335 tokens | 1.1s
+2026-05-26 00:59:35,849 - INFO - Prompt processing progress: 3334/3335
+2026-05-26 00:59:35 [dflash] prefill: 3335/3335 tokens | 1.1s
+2026-05-26 00:59:35,862 - INFO - Prompt processing progress: 3335/3335
+2026-05-26 00:59:37 [dflash] decode 128.0 tok/s | prefill logical 3010.5 tok/s | prefill real 3010.5 tok/s | prefill restored 0.0 tok/s | 59.0% accepted | 256 tokens | 3.1s | prompt: 3335 tokens
+2026-05-26 00:59:37 [dflash] req#24 mlx_active=19.78 mlx_cache=0.00 mlx_peak=21.77 rss_now=20.05 rss_peak=20.13 untracked=0.27 GB
+127.0.0.1 - - [26/May/2026 00:59:37] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 00:59:37] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 00:59:38 [dflash] prefill: 2048/6638 tokens | 0.5s
+2026-05-26 00:59:38,407 - INFO - Prompt processing progress: 2048/6638
+2026-05-26 00:59:38 [dflash] prefill: 4096/6638 tokens | 1.0s
+2026-05-26 00:59:38,863 - INFO - Prompt processing progress: 4096/6638
+2026-05-26 00:59:39 [dflash] prefill: 6144/6638 tokens | 1.5s
+2026-05-26 00:59:39,340 - INFO - Prompt processing progress: 6144/6638
+2026-05-26 00:59:39 [dflash] prefill: 6637/6638 tokens | 1.7s
+2026-05-26 00:59:39,529 - INFO - Prompt processing progress: 6637/6638
+2026-05-26 00:59:39 [dflash] prefill: 6638/6638 tokens | 1.7s
+2026-05-26 00:59:39,540 - INFO - Prompt processing progress: 6638/6638
+2026-05-26 00:59:41 [dflash] decode 124.8 tok/s | prefill logical 3970.0 tok/s | prefill real 3970.0 tok/s | prefill restored 0.0 tok/s | 59.4% accepted | 256 tokens | 3.7s | prompt: 6638 tokens
+2026-05-26 00:59:41 [dflash] req#25 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.18 rss_now=20.05 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:00:41] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:00:41] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:00:42 [dflash] prefill: 2048/6638 tokens | 0.8s
+2026-05-26 01:00:42,399 - INFO - Prompt processing progress: 2048/6638
+2026-05-26 01:00:42 [dflash] prefill: 4096/6638 tokens | 1.2s
+2026-05-26 01:00:42,854 - INFO - Prompt processing progress: 4096/6638
+2026-05-26 01:00:43 [dflash] prefill: 6144/6638 tokens | 1.7s
+2026-05-26 01:00:43,329 - INFO - Prompt processing progress: 6144/6638
+2026-05-26 01:00:43 [dflash] prefill: 6637/6638 tokens | 1.9s
+2026-05-26 01:00:43,518 - INFO - Prompt processing progress: 6637/6638
+2026-05-26 01:00:43 [dflash] prefill: 6638/6638 tokens | 1.9s
+2026-05-26 01:00:43,530 - INFO - Prompt processing progress: 6638/6638
+2026-05-26 01:00:45 [dflash] decode 124.9 tok/s | prefill logical 3468.6 tok/s | prefill real 3468.6 tok/s | prefill restored 0.0 tok/s | 59.4% accepted | 256 tokens | 4.0s | prompt: 6638 tokens
+2026-05-26 01:00:45 [dflash] req#26 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.18 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:01:45] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:01:45] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:01:46 [dflash] prefill: 2048/6638 tokens | 0.8s
+2026-05-26 01:01:46,383 - INFO - Prompt processing progress: 2048/6638
+2026-05-26 01:01:46 [dflash] prefill: 4096/6638 tokens | 1.2s
+2026-05-26 01:01:46,840 - INFO - Prompt processing progress: 4096/6638
+2026-05-26 01:01:47 [dflash] prefill: 6144/6638 tokens | 1.7s
+2026-05-26 01:01:47,316 - INFO - Prompt processing progress: 6144/6638
+2026-05-26 01:01:47 [dflash] prefill: 6637/6638 tokens | 1.9s
+2026-05-26 01:01:47,506 - INFO - Prompt processing progress: 6637/6638
+2026-05-26 01:01:47 [dflash] prefill: 6638/6638 tokens | 1.9s
+2026-05-26 01:01:47,517 - INFO - Prompt processing progress: 6638/6638
+2026-05-26 01:01:49 [dflash] decode 124.5 tok/s | prefill logical 3471.1 tok/s | prefill real 3471.1 tok/s | prefill restored 0.0 tok/s | 59.4% accepted | 256 tokens | 4.0s | prompt: 6638 tokens
+2026-05-26 01:01:49 [dflash] req#27 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.18 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:02:49] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:02:49] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:02:50 [dflash] prefill: 2048/6638 tokens | 0.8s
+2026-05-26 01:02:50,383 - INFO - Prompt processing progress: 2048/6638
+2026-05-26 01:02:50 [dflash] prefill: 4096/6638 tokens | 1.2s
+2026-05-26 01:02:50,839 - INFO - Prompt processing progress: 4096/6638
+2026-05-26 01:02:51 [dflash] prefill: 6144/6638 tokens | 1.7s
+2026-05-26 01:02:51,317 - INFO - Prompt processing progress: 6144/6638
+2026-05-26 01:02:51 [dflash] prefill: 6637/6638 tokens | 1.9s
+2026-05-26 01:02:51,507 - INFO - Prompt processing progress: 6637/6638
+2026-05-26 01:02:51 [dflash] prefill: 6638/6638 tokens | 1.9s
+2026-05-26 01:02:51,518 - INFO - Prompt processing progress: 6638/6638
+2026-05-26 01:02:53 [dflash] decode 124.5 tok/s | prefill logical 3457.0 tok/s | prefill real 3457.0 tok/s | prefill restored 0.0 tok/s | 59.4% accepted | 256 tokens | 4.0s | prompt: 6638 tokens
+2026-05-26 01:02:53 [dflash] req#28 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.18 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:03:53] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:03:53] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:03:54 [dflash] prefill: 2048/6638 tokens | 0.8s
+2026-05-26 01:03:54,391 - INFO - Prompt processing progress: 2048/6638
+2026-05-26 01:03:54 [dflash] prefill: 4096/6638 tokens | 1.2s
+2026-05-26 01:03:54,847 - INFO - Prompt processing progress: 4096/6638
+2026-05-26 01:03:55 [dflash] prefill: 6144/6638 tokens | 1.7s
+2026-05-26 01:03:55,324 - INFO - Prompt processing progress: 6144/6638
+2026-05-26 01:03:55 [dflash] prefill: 6637/6638 tokens | 1.9s
+2026-05-26 01:03:55,513 - INFO - Prompt processing progress: 6637/6638
+2026-05-26 01:03:55 [dflash] prefill: 6638/6638 tokens | 1.9s
+2026-05-26 01:03:55,525 - INFO - Prompt processing progress: 6638/6638
+2026-05-26 01:03:57 [dflash] decode 124.6 tok/s | prefill logical 3461.2 tok/s | prefill real 3461.2 tok/s | prefill restored 0.0 tok/s | 59.4% accepted | 256 tokens | 4.0s | prompt: 6638 tokens
+2026-05-26 01:03:57 [dflash] req#29 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.18 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:04:57] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:04:57] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:04:58 [dflash] prefill: 2048/6638 tokens | 0.8s
+2026-05-26 01:04:58,394 - INFO - Prompt processing progress: 2048/6638
+2026-05-26 01:04:58 [dflash] prefill: 4096/6638 tokens | 1.2s
+2026-05-26 01:04:58,850 - INFO - Prompt processing progress: 4096/6638
+2026-05-26 01:04:59 [dflash] prefill: 6144/6638 tokens | 1.7s
+2026-05-26 01:04:59,326 - INFO - Prompt processing progress: 6144/6638
+2026-05-26 01:04:59 [dflash] prefill: 6637/6638 tokens | 1.9s
+2026-05-26 01:04:59,516 - INFO - Prompt processing progress: 6637/6638
+2026-05-26 01:04:59 [dflash] prefill: 6638/6638 tokens | 1.9s
+2026-05-26 01:04:59,527 - INFO - Prompt processing progress: 6638/6638
+2026-05-26 01:05:01 [dflash] decode 124.3 tok/s | prefill logical 3458.5 tok/s | prefill real 3458.5 tok/s | prefill restored 0.0 tok/s | 59.4% accepted | 256 tokens | 4.0s | prompt: 6638 tokens
+2026-05-26 01:05:01 [dflash] req#30 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.18 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:05:01] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:05:01] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:05:02 [dflash] prefill: 2048/13252 tokens | 0.5s
+2026-05-26 01:05:02,141 - INFO - Prompt processing progress: 2048/13252
+2026-05-26 01:05:02 [dflash] prefill: 4096/13252 tokens | 1.0s
+2026-05-26 01:05:02,596 - INFO - Prompt processing progress: 4096/13252
+2026-05-26 01:05:03 [dflash] prefill: 6144/13252 tokens | 1.5s
+2026-05-26 01:05:03,072 - INFO - Prompt processing progress: 6144/13252
+2026-05-26 01:05:03 [dflash] prefill: 8192/13252 tokens | 2.0s
+2026-05-26 01:05:03,572 - INFO - Prompt processing progress: 8192/13252
+2026-05-26 01:05:04 [dflash] prefill: 10240/13252 tokens | 2.5s
+2026-05-26 01:05:04,117 - INFO - Prompt processing progress: 10240/13252
+2026-05-26 01:05:04 [dflash] prefill: 12288/13252 tokens | 3.1s
+2026-05-26 01:05:04,703 - INFO - Prompt processing progress: 12288/13252
+2026-05-26 01:05:05 [dflash] prefill: 13251/13252 tokens | 3.5s
+2026-05-26 01:05:05,054 - INFO - Prompt processing progress: 13251/13252
+2026-05-26 01:05:05 [dflash] prefill: 13252/13252 tokens | 3.5s
+2026-05-26 01:05:05,067 - INFO - Prompt processing progress: 13252/13252
+2026-05-26 01:05:07 [dflash] decode 117.3 tok/s | prefill logical 3819.0 tok/s | prefill real 3819.0 tok/s | prefill restored 0.0 tok/s | 59.8% accepted | 256 tokens | 5.7s | prompt: 13252 tokens
+2026-05-26 01:05:07 [dflash] req#31 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.69 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:06:07] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:06:07] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:06:08 [dflash] prefill: 2048/13252 tokens | 0.8s
+2026-05-26 01:06:08,071 - INFO - Prompt processing progress: 2048/13252
+2026-05-26 01:06:08 [dflash] prefill: 4096/13252 tokens | 1.2s
+2026-05-26 01:06:08,527 - INFO - Prompt processing progress: 4096/13252
+2026-05-26 01:06:09 [dflash] prefill: 6144/13252 tokens | 1.7s
+2026-05-26 01:06:09,003 - INFO - Prompt processing progress: 6144/13252
+2026-05-26 01:06:09 [dflash] prefill: 8192/13252 tokens | 2.2s
+2026-05-26 01:06:09,500 - INFO - Prompt processing progress: 8192/13252
+2026-05-26 01:06:10 [dflash] prefill: 10240/13252 tokens | 2.7s
+2026-05-26 01:06:10,022 - INFO - Prompt processing progress: 10240/13252
+2026-05-26 01:06:10 [dflash] prefill: 12288/13252 tokens | 3.3s
+2026-05-26 01:06:10,570 - INFO - Prompt processing progress: 12288/13252
+2026-05-26 01:06:10 [dflash] prefill: 13251/13252 tokens | 3.6s
+2026-05-26 01:06:10,892 - INFO - Prompt processing progress: 13251/13252
+2026-05-26 01:06:10 [dflash] prefill: 13252/13252 tokens | 3.6s
+2026-05-26 01:06:10,906 - INFO - Prompt processing progress: 13252/13252
+2026-05-26 01:06:13 [dflash] decode 119.1 tok/s | prefill logical 3667.6 tok/s | prefill real 3667.6 tok/s | prefill restored 0.0 tok/s | 59.8% accepted | 256 tokens | 5.8s | prompt: 13252 tokens
+2026-05-26 01:06:13 [dflash] req#32 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.69 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:07:13] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:07:13] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:07:13 [dflash] prefill: 2048/13252 tokens | 0.8s
+2026-05-26 01:07:13,881 - INFO - Prompt processing progress: 2048/13252
+2026-05-26 01:07:14 [dflash] prefill: 4096/13252 tokens | 1.2s
+2026-05-26 01:07:14,338 - INFO - Prompt processing progress: 4096/13252
+2026-05-26 01:07:14 [dflash] prefill: 6144/13252 tokens | 1.7s
+2026-05-26 01:07:14,814 - INFO - Prompt processing progress: 6144/13252
+2026-05-26 01:07:15 [dflash] prefill: 8192/13252 tokens | 2.2s
+2026-05-26 01:07:15,312 - INFO - Prompt processing progress: 8192/13252
+2026-05-26 01:07:15 [dflash] prefill: 10240/13252 tokens | 2.7s
+2026-05-26 01:07:15,832 - INFO - Prompt processing progress: 10240/13252
+2026-05-26 01:07:16 [dflash] prefill: 12288/13252 tokens | 3.3s
+2026-05-26 01:07:16,383 - INFO - Prompt processing progress: 12288/13252
+2026-05-26 01:07:16 [dflash] prefill: 13251/13252 tokens | 3.6s
+2026-05-26 01:07:16,703 - INFO - Prompt processing progress: 13251/13252
+2026-05-26 01:07:16 [dflash] prefill: 13252/13252 tokens | 3.6s
+2026-05-26 01:07:16,716 - INFO - Prompt processing progress: 13252/13252
+2026-05-26 01:07:18 [dflash] decode 119.1 tok/s | prefill logical 3664.3 tok/s | prefill real 3664.3 tok/s | prefill restored 0.0 tok/s | 59.8% accepted | 256 tokens | 5.8s | prompt: 13252 tokens
+2026-05-26 01:07:18 [dflash] req#33 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.69 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:08:18] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:08:18] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:08:19 [dflash] prefill: 2048/13252 tokens | 0.8s
+2026-05-26 01:08:19,689 - INFO - Prompt processing progress: 2048/13252
+2026-05-26 01:08:20 [dflash] prefill: 4096/13252 tokens | 1.2s
+2026-05-26 01:08:20,147 - INFO - Prompt processing progress: 4096/13252
+2026-05-26 01:08:20 [dflash] prefill: 6144/13252 tokens | 1.7s
+2026-05-26 01:08:20,624 - INFO - Prompt processing progress: 6144/13252
+2026-05-26 01:08:21 [dflash] prefill: 8192/13252 tokens | 2.2s
+2026-05-26 01:08:21,121 - INFO - Prompt processing progress: 8192/13252
+2026-05-26 01:08:21 [dflash] prefill: 10240/13252 tokens | 2.7s
+2026-05-26 01:08:21,643 - INFO - Prompt processing progress: 10240/13252
+2026-05-26 01:08:22 [dflash] prefill: 12288/13252 tokens | 3.3s
+2026-05-26 01:08:22,192 - INFO - Prompt processing progress: 12288/13252
+2026-05-26 01:08:22 [dflash] prefill: 13251/13252 tokens | 3.6s
+2026-05-26 01:08:22,511 - INFO - Prompt processing progress: 13251/13252
+2026-05-26 01:08:22 [dflash] prefill: 13252/13252 tokens | 3.6s
+2026-05-26 01:08:22,525 - INFO - Prompt processing progress: 13252/13252
+2026-05-26 01:08:24 [dflash] decode 119.0 tok/s | prefill logical 3663.7 tok/s | prefill real 3663.7 tok/s | prefill restored 0.0 tok/s | 59.8% accepted | 256 tokens | 5.8s | prompt: 13252 tokens
+2026-05-26 01:08:24 [dflash] req#34 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.69 rss_now=20.06 rss_peak=20.13 untracked=0.29 GB
+127.0.0.1 - - [26/May/2026 01:09:24] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:09:24] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:09:25 [dflash] prefill: 2048/13252 tokens | 0.8s
+2026-05-26 01:09:25,505 - INFO - Prompt processing progress: 2048/13252
+2026-05-26 01:09:25 [dflash] prefill: 4096/13252 tokens | 1.2s
+2026-05-26 01:09:25,961 - INFO - Prompt processing progress: 4096/13252
+2026-05-26 01:09:26 [dflash] prefill: 6144/13252 tokens | 1.7s
+2026-05-26 01:09:26,438 - INFO - Prompt processing progress: 6144/13252
+2026-05-26 01:09:26 [dflash] prefill: 8192/13252 tokens | 2.2s
+2026-05-26 01:09:26,934 - INFO - Prompt processing progress: 8192/13252
+2026-05-26 01:09:27 [dflash] prefill: 10240/13252 tokens | 2.7s
+2026-05-26 01:09:27,455 - INFO - Prompt processing progress: 10240/13252
+2026-05-26 01:09:28 [dflash] prefill: 12288/13252 tokens | 3.3s
+2026-05-26 01:09:28,004 - INFO - Prompt processing progress: 12288/13252
+2026-05-26 01:09:28 [dflash] prefill: 13251/13252 tokens | 3.6s
+2026-05-26 01:09:28,324 - INFO - Prompt processing progress: 13251/13252
+2026-05-26 01:09:28 [dflash] prefill: 13252/13252 tokens | 3.6s
+2026-05-26 01:09:28,338 - INFO - Prompt processing progress: 13252/13252
+2026-05-26 01:09:30 [dflash] decode 117.6 tok/s | prefill logical 3666.1 tok/s | prefill real 3666.1 tok/s | prefill restored 0.0 tok/s | 59.8% accepted | 256 tokens | 5.8s | prompt: 13252 tokens
+2026-05-26 01:09:30 [dflash] req#35 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.69 rss_now=20.06 rss_peak=20.13 untracked=0.29 GB
+127.0.0.1 - - [26/May/2026 01:10:30] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:10:30] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:10:31 [dflash] prefill: 2048/13252 tokens | 0.8s
+2026-05-26 01:10:31,339 - INFO - Prompt processing progress: 2048/13252
+2026-05-26 01:10:31 [dflash] prefill: 4096/13252 tokens | 1.2s
+2026-05-26 01:10:31,795 - INFO - Prompt processing progress: 4096/13252
+2026-05-26 01:10:32 [dflash] prefill: 6144/13252 tokens | 1.7s
+2026-05-26 01:10:32,271 - INFO - Prompt processing progress: 6144/13252
+2026-05-26 01:10:32 [dflash] prefill: 8192/13252 tokens | 2.2s
+2026-05-26 01:10:32,768 - INFO - Prompt processing progress: 8192/13252
+2026-05-26 01:10:33 [dflash] prefill: 10240/13252 tokens | 2.7s
+2026-05-26 01:10:33,291 - INFO - Prompt processing progress: 10240/13252
+2026-05-26 01:10:33 [dflash] prefill: 12288/13252 tokens | 3.3s
+2026-05-26 01:10:33,838 - INFO - Prompt processing progress: 12288/13252
+2026-05-26 01:10:34 [dflash] prefill: 13251/13252 tokens | 3.6s
+2026-05-26 01:10:34,172 - INFO - Prompt processing progress: 13251/13252
+2026-05-26 01:10:34 [dflash] prefill: 13252/13252 tokens | 3.6s
+2026-05-26 01:10:34,195 - INFO - Prompt processing progress: 13252/13252
+2026-05-26 01:10:36 [dflash] decode 117.3 tok/s | prefill logical 3643.4 tok/s | prefill real 3643.4 tok/s | prefill restored 0.0 tok/s | 59.8% accepted | 256 tokens | 5.8s | prompt: 13252 tokens
+2026-05-26 01:10:36 [dflash] req#36 mlx_active=19.78 mlx_cache=0.00 mlx_peak=22.69 rss_now=20.06 rss_peak=20.13 untracked=0.28 GB
+127.0.0.1 - - [26/May/2026 01:10:36] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:10:36] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:10:36 [dflash] prefill: 2048/26477 tokens | 0.6s
+2026-05-26 01:10:36,954 - INFO - Prompt processing progress: 2048/26477
+2026-05-26 01:10:37 [dflash] prefill: 4096/26477 tokens | 1.0s
+2026-05-26 01:10:37,411 - INFO - Prompt processing progress: 4096/26477
+2026-05-26 01:10:37 [dflash] prefill: 6144/26477 tokens | 1.6s
+2026-05-26 01:10:37,953 - INFO - Prompt processing progress: 6144/26477
+2026-05-26 01:10:38 [dflash] prefill: 8192/26477 tokens | 2.1s
+2026-05-26 01:10:38,484 - INFO - Prompt processing progress: 8192/26477
+2026-05-26 01:10:39 [dflash] prefill: 10240/26477 tokens | 2.6s
+2026-05-26 01:10:39,047 - INFO - Prompt processing progress: 10240/26477
+2026-05-26 01:10:39 [dflash] prefill: 12288/26477 tokens | 3.2s
+2026-05-26 01:10:39,645 - INFO - Prompt processing progress: 12288/26477
+2026-05-26 01:10:40 [dflash] prefill: 14336/26477 tokens | 3.9s
+2026-05-26 01:10:40,281 - INFO - Prompt processing progress: 14336/26477
+2026-05-26 01:10:40 [dflash] prefill: 16384/26477 tokens | 4.5s
+2026-05-26 01:10:40,947 - INFO - Prompt processing progress: 16384/26477
+2026-05-26 01:10:41 [dflash] prefill: 18432/26477 tokens | 5.3s
+2026-05-26 01:10:41,655 - INFO - Prompt processing progress: 18432/26477
+2026-05-26 01:10:42 [dflash] prefill: 20480/26477 tokens | 6.0s
+2026-05-26 01:10:42,395 - INFO - Prompt processing progress: 20480/26477
+2026-05-26 01:10:43 [dflash] prefill: 22528/26477 tokens | 6.8s
+2026-05-26 01:10:43,163 - INFO - Prompt processing progress: 22528/26477
+2026-05-26 01:10:43 [dflash] prefill: 24576/26477 tokens | 7.6s
+2026-05-26 01:10:43,980 - INFO - Prompt processing progress: 24576/26477
+2026-05-26 01:10:44 [dflash] prefill: 26476/26477 tokens | 8.4s
+2026-05-26 01:10:44,768 - INFO - Prompt processing progress: 26476/26477
+2026-05-26 01:10:44 [dflash] prefill: 26477/26477 tokens | 8.4s
+2026-05-26 01:10:44,786 - INFO - Prompt processing progress: 26477/26477
+2026-05-26 01:10:46 [dflash] decode 118.3 tok/s | prefill logical 3157.1 tok/s | prefill real 3157.1 tok/s | prefill restored 0.0 tok/s | 61.3% accepted | 256 tokens | 10.6s | prompt: 26477 tokens
+2026-05-26 01:10:46 [dflash] req#37 mlx_active=19.78 mlx_cache=0.00 mlx_peak=23.79 rss_now=20.07 rss_peak=20.13 untracked=0.29 GB
+127.0.0.1 - - [26/May/2026 01:11:46] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:11:47] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:11:47 [dflash] prefill: 2048/26477 tokens | 0.8s
+2026-05-26 01:11:47,814 - INFO - Prompt processing progress: 2048/26477
+2026-05-26 01:11:48 [dflash] prefill: 4096/26477 tokens | 1.3s
+2026-05-26 01:11:48,271 - INFO - Prompt processing progress: 4096/26477
+2026-05-26 01:11:48 [dflash] prefill: 6144/26477 tokens | 1.7s
+2026-05-26 01:11:48,750 - INFO - Prompt processing progress: 6144/26477
+2026-05-26 01:11:49 [dflash] prefill: 8192/26477 tokens | 2.2s
+2026-05-26 01:11:49,247 - INFO - Prompt processing progress: 8192/26477
+2026-05-26 01:11:49 [dflash] prefill: 10240/26477 tokens | 2.8s
+2026-05-26 01:11:49,768 - INFO - Prompt processing progress: 10240/26477
+2026-05-26 01:11:50 [dflash] prefill: 12288/26477 tokens | 3.3s
+2026-05-26 01:11:50,321 - INFO - Prompt processing progress: 12288/26477
+2026-05-26 01:11:50 [dflash] prefill: 14336/26477 tokens | 3.9s
+2026-05-26 01:11:50,895 - INFO - Prompt processing progress: 14336/26477
+2026-05-26 01:11:51 [dflash] prefill: 16384/26477 tokens | 4.5s
+2026-05-26 01:11:51,490 - INFO - Prompt processing progress: 16384/26477
+2026-05-26 01:11:52 [dflash] prefill: 18432/26477 tokens | 5.1s
+2026-05-26 01:11:52,132 - INFO - Prompt processing progress: 18432/26477
+2026-05-26 01:11:52 [dflash] prefill: 20480/26477 tokens | 5.8s
+2026-05-26 01:11:52,810 - INFO - Prompt processing progress: 20480/26477
+2026-05-26 01:11:53 [dflash] prefill: 22528/26477 tokens | 6.5s
+2026-05-26 01:11:53,527 - INFO - Prompt processing progress: 22528/26477
+2026-05-26 01:11:54 [dflash] prefill: 24576/26477 tokens | 7.3s
+2026-05-26 01:11:54,280 - INFO - Prompt processing progress: 24576/26477
+2026-05-26 01:11:55 [dflash] prefill: 26476/26477 tokens | 8.0s
+2026-05-26 01:11:55,035 - INFO - Prompt processing progress: 26476/26477
+2026-05-26 01:11:55 [dflash] prefill: 26477/26477 tokens | 8.0s
+2026-05-26 01:11:55,054 - INFO - Prompt processing progress: 26477/26477
+2026-05-26 01:11:57 [dflash] decode 120.9 tok/s | prefill logical 3292.0 tok/s | prefill real 3292.0 tok/s | prefill restored 0.0 tok/s | 61.3% accepted | 256 tokens | 10.2s | prompt: 26477 tokens
+2026-05-26 01:11:57 [dflash] req#38 mlx_active=19.78 mlx_cache=0.00 mlx_peak=23.79 rss_now=20.07 rss_peak=20.13 untracked=0.29 GB
+127.0.0.1 - - [26/May/2026 01:12:57] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:12:57] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:12:58 [dflash] prefill: 2048/26477 tokens | 0.8s
+2026-05-26 01:12:58,007 - INFO - Prompt processing progress: 2048/26477
+2026-05-26 01:12:58 [dflash] prefill: 4096/26477 tokens | 1.2s
+2026-05-26 01:12:58,465 - INFO - Prompt processing progress: 4096/26477
+2026-05-26 01:12:58 [dflash] prefill: 6144/26477 tokens | 1.7s
+2026-05-26 01:12:58,941 - INFO - Prompt processing progress: 6144/26477
+2026-05-26 01:12:59 [dflash] prefill: 8192/26477 tokens | 2.2s
+2026-05-26 01:12:59,438 - INFO - Prompt processing progress: 8192/26477
+2026-05-26 01:12:59 [dflash] prefill: 10240/26477 tokens | 2.7s
+2026-05-26 01:12:59,960 - INFO - Prompt processing progress: 10240/26477
+2026-05-26 01:13:00 [dflash] prefill: 12288/26477 tokens | 3.3s
+2026-05-26 01:13:00,510 - INFO - Prompt processing progress: 12288/26477
+2026-05-26 01:13:01 [dflash] prefill: 14336/26477 tokens | 3.9s
+2026-05-26 01:13:01,087 - INFO - Prompt processing progress: 14336/26477
+2026-05-26 01:13:01 [dflash] prefill: 16384/26477 tokens | 4.5s
+2026-05-26 01:13:01,687 - INFO - Prompt processing progress: 16384/26477
+2026-05-26 01:13:02 [dflash] prefill: 18432/26477 tokens | 5.1s
+2026-05-26 01:13:02,314 - INFO - Prompt processing progress: 18432/26477
+2026-05-26 01:13:02 [dflash] prefill: 20480/26477 tokens | 5.7s
+2026-05-26 01:13:02,975 - INFO - Prompt processing progress: 20480/26477
+2026-05-26 01:13:03 [dflash] prefill: 22528/26477 tokens | 6.5s
+2026-05-26 01:13:03,681 - INFO - Prompt processing progress: 22528/26477
+2026-05-26 01:13:04 [dflash] prefill: 24576/26477 tokens | 7.2s
+2026-05-26 01:13:04,427 - INFO - Prompt processing progress: 24576/26477
+2026-05-26 01:13:05 [dflash] prefill: 26476/26477 tokens | 8.0s
+2026-05-26 01:13:05,190 - INFO - Prompt processing progress: 26476/26477
+2026-05-26 01:13:05 [dflash] prefill: 26477/26477 tokens | 8.0s
+2026-05-26 01:13:05,209 - INFO - Prompt processing progress: 26477/26477
+2026-05-26 01:13:07 [dflash] decode 121.3 tok/s | prefill logical 3315.9 tok/s | prefill real 3315.9 tok/s | prefill restored 0.0 tok/s | 61.3% accepted | 256 tokens | 10.1s | prompt: 26477 tokens
+2026-05-26 01:13:07 [dflash] req#39 mlx_active=19.78 mlx_cache=0.00 mlx_peak=23.85 rss_now=20.07 rss_peak=20.13 untracked=0.30 GB
+127.0.0.1 - - [26/May/2026 01:14:07] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:14:07] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:14:08 [dflash] prefill: 2048/26477 tokens | 0.8s
+2026-05-26 01:14:08,165 - INFO - Prompt processing progress: 2048/26477
+2026-05-26 01:14:08 [dflash] prefill: 4096/26477 tokens | 1.2s
+2026-05-26 01:14:08,621 - INFO - Prompt processing progress: 4096/26477
+2026-05-26 01:14:09 [dflash] prefill: 6144/26477 tokens | 1.7s
+2026-05-26 01:14:09,099 - INFO - Prompt processing progress: 6144/26477
+2026-05-26 01:14:09 [dflash] prefill: 8192/26477 tokens | 2.2s
+2026-05-26 01:14:09,597 - INFO - Prompt processing progress: 8192/26477
+2026-05-26 01:14:10 [dflash] prefill: 10240/26477 tokens | 2.7s
+2026-05-26 01:14:10,122 - INFO - Prompt processing progress: 10240/26477
+2026-05-26 01:14:10 [dflash] prefill: 12288/26477 tokens | 3.3s
+2026-05-26 01:14:10,673 - INFO - Prompt processing progress: 12288/26477
+2026-05-26 01:14:11 [dflash] prefill: 14336/26477 tokens | 3.9s
+2026-05-26 01:14:11,249 - INFO - Prompt processing progress: 14336/26477
+2026-05-26 01:14:11 [dflash] prefill: 16384/26477 tokens | 4.5s
+2026-05-26 01:14:11,845 - INFO - Prompt processing progress: 16384/26477
+2026-05-26 01:14:12 [dflash] prefill: 18432/26477 tokens | 5.1s
+2026-05-26 01:14:12,475 - INFO - Prompt processing progress: 18432/26477
+2026-05-26 01:14:13 [dflash] prefill: 20480/26477 tokens | 5.8s
+2026-05-26 01:14:13,141 - INFO - Prompt processing progress: 20480/26477
+2026-05-26 01:14:13 [dflash] prefill: 22528/26477 tokens | 6.5s
+2026-05-26 01:14:13,857 - INFO - Prompt processing progress: 22528/26477
+2026-05-26 01:14:14 [dflash] prefill: 24576/26477 tokens | 7.2s
+2026-05-26 01:14:14,606 - INFO - Prompt processing progress: 24576/26477
+2026-05-26 01:14:15 [dflash] prefill: 26476/26477 tokens | 8.0s
+2026-05-26 01:14:15,353 - INFO - Prompt processing progress: 26476/26477
+2026-05-26 01:14:15 [dflash] prefill: 26477/26477 tokens | 8.0s
+2026-05-26 01:14:15,371 - INFO - Prompt processing progress: 26477/26477
+2026-05-26 01:14:17 [dflash] decode 121.3 tok/s | prefill logical 3313.0 tok/s | prefill real 3313.0 tok/s | prefill restored 0.0 tok/s | 61.3% accepted | 256 tokens | 10.1s | prompt: 26477 tokens
+2026-05-26 01:14:17 [dflash] req#40 mlx_active=19.78 mlx_cache=0.00 mlx_peak=23.85 rss_now=20.07 rss_peak=20.13 untracked=0.29 GB
+127.0.0.1 - - [26/May/2026 01:15:17] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:15:17] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:15:18 [dflash] prefill: 2048/26477 tokens | 0.8s
+2026-05-26 01:15:18,395 - INFO - Prompt processing progress: 2048/26477
+2026-05-26 01:15:18 [dflash] prefill: 4096/26477 tokens | 1.3s
+2026-05-26 01:15:18,854 - INFO - Prompt processing progress: 4096/26477
+2026-05-26 01:15:19 [dflash] prefill: 6144/26477 tokens | 1.8s
+2026-05-26 01:15:19,332 - INFO - Prompt processing progress: 6144/26477
+2026-05-26 01:15:19 [dflash] prefill: 8192/26477 tokens | 2.3s
+2026-05-26 01:15:19,831 - INFO - Prompt processing progress: 8192/26477
+2026-05-26 01:15:20 [dflash] prefill: 10240/26477 tokens | 2.8s
+2026-05-26 01:15:20,353 - INFO - Prompt processing progress: 10240/26477
+2026-05-26 01:15:20 [dflash] prefill: 12288/26477 tokens | 3.4s
+2026-05-26 01:15:20,906 - INFO - Prompt processing progress: 12288/26477
+2026-05-26 01:15:21 [dflash] prefill: 14336/26477 tokens | 3.9s
+2026-05-26 01:15:21,482 - INFO - Prompt processing progress: 14336/26477
+2026-05-26 01:15:22 [dflash] prefill: 16384/26477 tokens | 4.5s
+2026-05-26 01:15:22,078 - INFO - Prompt processing progress: 16384/26477
+2026-05-26 01:15:22 [dflash] prefill: 18432/26477 tokens | 5.2s
+2026-05-26 01:15:22,709 - INFO - Prompt processing progress: 18432/26477
+2026-05-26 01:15:23 [dflash] prefill: 20480/26477 tokens | 5.8s
+2026-05-26 01:15:23,375 - INFO - Prompt processing progress: 20480/26477
+2026-05-26 01:15:24 [dflash] prefill: 22528/26477 tokens | 6.5s
+2026-05-26 01:15:24,088 - INFO - Prompt processing progress: 22528/26477
+2026-05-26 01:15:24 [dflash] prefill: 24576/26477 tokens | 7.3s
+2026-05-26 01:15:24,832 - INFO - Prompt processing progress: 24576/26477
+2026-05-26 01:15:25 [dflash] prefill: 26476/26477 tokens | 8.0s
+2026-05-26 01:15:25,580 - INFO - Prompt processing progress: 26476/26477
+2026-05-26 01:15:25 [dflash] prefill: 26477/26477 tokens | 8.1s
+2026-05-26 01:15:25,599 - INFO - Prompt processing progress: 26477/26477
+2026-05-26 01:15:27 [dflash] decode 121.1 tok/s | prefill logical 3288.0 tok/s | prefill real 3288.0 tok/s | prefill restored 0.0 tok/s | 61.3% accepted | 256 tokens | 10.2s | prompt: 26477 tokens
+2026-05-26 01:15:27 [dflash] req#41 mlx_active=19.78 mlx_cache=0.00 mlx_peak=23.85 rss_now=20.07 rss_peak=20.13 untracked=0.29 GB
+127.0.0.1 - - [26/May/2026 01:16:27] "POST /v1/cache/clear HTTP/1.1" 404 -
+127.0.0.1 - - [26/May/2026 01:16:27] "POST /v1/chat/completions HTTP/1.1" 200 -
+2026-05-26 01:16:28 [dflash] prefill: 2048/26477 tokens | 0.9s
+2026-05-26 01:16:28,628 - INFO - Prompt processing progress: 2048/26477
+2026-05-26 01:16:29 [dflash] prefill: 4096/26477 tokens | 1.3s
+2026-05-26 01:16:29,086 - INFO - Prompt processing progress: 4096/26477
+2026-05-26 01:16:29 [dflash] prefill: 6144/26477 tokens | 1.8s
+2026-05-26 01:16:29,564 - INFO - Prompt processing progress: 6144/26477
+2026-05-26 01:16:30 [dflash] prefill: 8192/26477 tokens | 2.3s
+2026-05-26 01:16:30,061 - INFO - Prompt processing progress: 8192/26477
+2026-05-26 01:16:30 [dflash] prefill: 10240/26477 tokens | 2.8s
+2026-05-26 01:16:30,583 - INFO - Prompt processing progress: 10240/26477
+2026-05-26 01:16:31 [dflash] prefill: 12288/26477 tokens | 3.4s
+2026-05-26 01:16:31,134 - INFO - Prompt processing progress: 12288/26477
+2026-05-26 01:16:31 [dflash] prefill: 14336/26477 tokens | 3.9s
+2026-05-26 01:16:31,708 - INFO - Prompt processing progress: 14336/26477
+2026-05-26 01:16:32 [dflash] prefill: 16384/26477 tokens | 4.5s
+2026-05-26 01:16:32,303 - INFO - Prompt processing progress: 16384/26477
+2026-05-26 01:16:32 [dflash] prefill: 18432/26477 tokens | 5.2s
+2026-05-26 01:16:32,943 - INFO - Prompt processing progress: 18432/26477
+2026-05-26 01:16:33 [dflash] prefill: 20480/26477 tokens | 5.8s
+2026-05-26 01:16:33,616 - INFO - Prompt processing progress: 20480/26477
+2026-05-26 01:16:34 [dflash] prefill: 22528/26477 tokens | 6.6s
+2026-05-26 01:16:34,330 - INFO - Prompt processing progress: 22528/26477
+2026-05-26 01:16:35 [dflash] prefill: 24576/26477 tokens | 7.3s
+2026-05-26 01:16:35,077 - INFO - Prompt processing progress: 24576/26477
+2026-05-26 01:16:35 [dflash] prefill: 26476/26477 tokens | 8.1s
+2026-05-26 01:16:35,829 - INFO - Prompt processing progress: 26476/26477
+2026-05-26 01:16:35 [dflash] prefill: 26477/26477 tokens | 8.1s
+2026-05-26 01:16:35,848 - INFO - Prompt processing progress: 26477/26477
+2026-05-26 01:16:37 [dflash] decode 121.2 tok/s | prefill logical 3278.6 tok/s | prefill real 3278.6 tok/s | prefill restored 0.0 tok/s | 61.3% accepted | 256 tokens | 10.2s | prompt: 26477 tokens
+2026-05-26 01:16:37 [dflash] req#42 mlx_active=19.78 mlx_cache=0.00 mlx_peak=23.85 rss_now=20.07 rss_peak=20.13 untracked=0.29 GB

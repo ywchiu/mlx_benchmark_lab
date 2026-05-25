@@ -102,13 +102,73 @@ Looking across the table:
 
 ### Note on contributor's reported numbers
 
-The contributor reported 113.1 tps median at 32K; we measured 89.7. The
-per-run sequence on our hardware is 98.8 → 94.9 → 89.7 → 86.1 → 82.7 — a clear
-monotonic degradation across the 5 runs, suggesting either thermal throttling or
-cache pressure accumulating across runs of the same workload. The contributor's
-113 is within our run-1 ballpark (~99) plus run-to-run variance, so the two
-results aren't really in conflict; they're sampling different points on the same
-distribution. The conclusion (the cliff is gone) holds either way.
+The contributor reported 113.1 tps median at 32K; we measured 89.7 with our
+default `cooldown=2`. The per-run sequence at that cooldown was
+98.8 → 94.9 → 89.7 → 86.1 → 82.7 — a clear monotonic degradation across the 5
+runs, suggesting either thermal throttling or cache pressure accumulating across
+runs of the same workload. We then re-ran with `cooldown=60` (the contributor's
+methodology) and got 121.2 tps with std=0.2 — essentially matching their 123 and
+confirming the gap was a thermal artifact of the short cooldown. The
+[cooldown=2 vs cooldown=60 comparison](#cooldown-comparison-2s-vs-60s) is
+broken out below.
+
+### Cooldown comparison (2s vs 60s)
+
+Same dflash-mlx v0.1.7 server, same prompts, same 5 runs per cell — only the
+inter-run cooldown changed. Data: [`data/dflash_v6.jsonl`](../data/dflash_v6.jsonl)
+(2s) and [`data/dflash_v6_c60.jsonl`](../data/dflash_v6_c60.jsonl) (60s).
+
+| size | decode @ cd=2 | decode @ cd=60 | Δ | std @ cd=2 | std @ cd=60 |
+|---:|---:|---:|---:|---:|---:|
+| 64 | 149.5 | 148.7 | −1% | 0.8 | 1.8 |
+| 512 | 140.0 | 138.9 | −1% | 0.6 | 2.1 |
+| 2,048 | 153.6 | 154.5 | +1% | 0.5 | 0.4 |
+| 4,096 | 126.8 | 127.7 | +1% | 1.4 | 0.2 |
+| 8,192 | 122.1 | 124.6 | +2% | 0.4 | 0.2 |
+| 16,384 | 103.8 | **119.0** | **+15%** | 6.4 | 0.9 |
+| 32,768 | 89.7 | **121.2** | **+35%** | 6.5 | 0.2 |
+
+The short-context cells are unchanged — at those sizes each run finishes in
+under 3 seconds and the M5 Max has plenty of thermal headroom even with a 2s
+gap. The 16K and 32K cells, where each run runs 10+ seconds of sustained GPU
+work, show a sharp split: with only 2s between runs the chip throttles
+progressively (std=6.5 from the monotonic degradation), but with 60s of recovery
+each run is essentially identical (std=0.2).
+
+The takeaway for benchmarking: at long context on Apple Silicon, cooldown is a
+real methodology variable. The 32K cooldown=2 median of 89.7 represents
+"thermally stressed steady state", while the cooldown=60 median of 121.2
+represents "single-request peak performance". Both are valid measurements of
+different things. The contributor's setup happened to use cooldown=60 (which is
+why their 123 tps is closer to our 121.2 than our 89.7), and that's arguably
+the better number to report for a "what's this framework actually capable of?"
+question, while cooldown=2 better reflects "what does it deliver under back-to-
+back load?". This lab's other framework runs all used cooldown=2, so for
+cross-framework comparison the v6 numbers are the apples-to-apples ones; the
+v6_c60 numbers are the right reference for absolute peak.
+
+### Long-context behavior beyond 32K
+
+The contributor also extended their ladder to 64K/96K/128K and observed:
+
+| size | decode (their data) | TTFT (their data) |
+|---:|---:|---:|
+| 65,536 | 112.8 | 21.5s |
+| 98,304 | 87.7 | 48.6s |
+| 131,072 | 69.9 | 106.3s |
+
+So the wall does exist, just much further out than 32K. We didn't re-measure
+this independently; treat it as a contributor data point rather than a lab
+result.
+
+### 27B target+draft (pending)
+
+The contributor noted that most of the recent dflash-mlx tuning was focused on
+the 27B-4bit target with the `z-lab/Qwen3.6-27B-DFlash` draft, so the 27B path
+is the headline optimization target for v0.1.7 even though the 35B-A3B path
+now also looks healthy. We started this sweep but `z-lab/Qwen3.6-27B-DFlash` is
+a gated HuggingFace repo and our auth wasn't set up; once that's resolved we'll
+add a 27B section here with the same methodology.
 
 ### Updated recommendation
 
