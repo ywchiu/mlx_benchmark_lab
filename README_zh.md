@@ -8,7 +8,9 @@
 
 之後我們又加測了第五個框架 **mtplx**，但跑的是另一個模型（`Youssofal/Qwen3.6-27B-MTPLX-Optimized-Speed`，27B dense、專為 MTPLX 的 speculative decoding 調校過）。因為模型不同，mtplx 在所有圖表中以虛線呈現、表格內以 `*` 標註，它的數字本身有獨立意義，但不能直接拿來跟另外四個比較。詳見 [四之一、mtplx（不同模型）](#41-mtplx不同模型)的獨立結果與測試方法。
 
-結論的精簡版：如果你的應用以長 context 為主（檢索增強生成、長文摘要、大檔案的程式碼分析），請選 **omlx**——它從 4K 脈絡開始就一路領先，而且在所有測試框架中時間最穩定。如果你的 prompt 短、產出格式可預測（例如程式碼或 JSON），那 **dflash-mlx** 在 64–2,048 token 區間明顯最快，因為它的 speculative decoding 在這類工作負載命中率高。但 dflash-mlx 在 32K 會災難性崩盤，decode 速度跌到每秒 12.6 token，比其他框架慢將近 6 倍，所以絕對不能拿來跑長 context 的應用。**mlx-vlm** 是這次唯一支援圖像、影片與音訊輸入的框架，但純文字的速度比另外三個慢約 25–30%，所以只在你真的需要多模態時才用它。**mtplx** 跑它自己那個速度優化過的 27B 模型，decode 整體落在 31–60 tps 之間，記憶體則非常穩（512 token 約 15.6 GB，32K 時也才 22.1 GB），所以它的賣點是「記憶體可預期」而不是「絕對最快」。
+結論的精簡版：**dflash-mlx** 用當前版本下在每個脈絡長度的 decode 速度都領先——從 4K 到 32K 都是冠軍（127、122、104、90 tps 中位數），短脈絡也很有競爭力（512 到 2K 落在 140–154 tps）。**omlx** 是「無聊但穩定」的選擇，當穩定度比峰值更重要時請選它——它的 decode tps 衰退曲線最平緩、TTFT 變異最低，最適合要訂 SLA 的場景。**rapid-mlx** 是穩當的中堅，從不領先但也從不落後太多。**mlx-vlm** 是這次唯一支援圖像、影片與音訊輸入的框架，但純文字的速度比另外三個慢約 25–30%，所以只在你真的需要多模態時才用它。**mtplx** 跑它自己那個速度優化過的 27B 模型，decode 整體落在 31–60 tps 之間，記憶體則非常穩（512 token 約 15.6 GB，32K 時也才 22.1 GB），所以它的賣點是「記憶體可預期」而不是「絕對最快」。
+
+> **關於 dflash-mlx 數字的說明。** dflash-mlx 那一列是 2026-05-25 用 dflash-mlx **v0.1.7** 重新測過的——一位社群網友指出原本 v0.1.0 的測試有個後來被修掉的 32K 崩潰（12.6 tps）。下方頭條表格中的數字來自 v0.1.7，方法論跟其他框架對齊（`cooldown=2`、`n=5`、`max_tokens=256`、prefix cache 關閉）。原本的 v0.1.0 數字跟「regression-then-fix」的完整故事保留在 [`reports/03-dflash-mlx_zh.md`](reports/03-dflash-mlx_zh.md)。
 
 ---
 
@@ -38,13 +40,13 @@ prompt 開頭加了 `/no_think`（Qwen3 用來抑制 reasoning 輸出的慣例�
 
 ![Decode tps](charts/zh/decode_tps.png)
 
-這張是頭條圖。x 軸是 prompt 脈絡長度，y 軸是 decode 速度的中位數。圖一打開故事就講完了：dflash-mlx（紅線）在 64 與 2,048 token 出現明顯尖峰，因為 speculative decoding 在這兩個尺寸命中得很好，但到了 32K 就懸崖式跳水。omlx（綠線）是「無聊但有效」的直線，從 4K 起一路把所有人壓在腳下。rapid-mlx（藍線）在小脈絡下表現很強，但隨著脈絡變長衰退得比 omlx 快。mlx-vlm（橘線）整段都最慢，但也是最平緩的曲線。紫色虛線是 mtplx 跑它自己的 27B 速度優化模型——因為 27B dense 每個 token 要走比 35B-MoE 多得多的參數，整條線明顯偏低，但從 4K 之後曲線異常平坦（4K→32K 是 43→31 tps）。
+這張是頭條圖。x 軸是 prompt 脈絡長度，y 軸是 decode 速度的中位數。dflash-mlx（紅線，v0.1.7）在整個區間都領先——它在 2K 的尖峰來自 speculative decoding 在自然語言摘要任務上的高命中率，而那條線一路維持在其他人之上直到 32K。omlx（綠線）是「無聊但有效」的直線——長脈絡第二名、變異最低。rapid-mlx（藍線）在小脈絡下表現很強，但隨著脈絡變長衰退得比 omlx 快。mlx-vlm（橘線）整段都最慢，但也是最平緩的曲線。紫色虛線是 mtplx 跑它自己的 27B 速度優化模型——因為 27B dense 每個 token 要走比 35B-MoE 多得多的參數，整條線明顯偏低，但從 4K 之後曲線異常平坦（4K→32K 是 43→31 tps）。
 
 ### 3.2 Decode 衰退曲線
 
 ![衰退曲線](charts/zh/degradation.png)
 
-把同一份資料正規化，讓每個框架自己最小脈絡的速度當作 100% 起點（前四個框架是 64 token，mtplx 沒測 64 所以用 512 token）。這樣可以把「KV cache 變大時，decode 慢多少」跟「哪個框架絕對最快」拆開來看。omlx 衰退最少，從 100% 降到 32K 時的 66%；mlx-vlm 相對曲線甚至更平，但這只是因為它的 64 token 起點本來就低。rapid-mlx 到 32K 時掉了大約 42% 的速度。dflash-mlx 則是斷崖：32K 時只剩下 64 token 速度的 7.5%。mtplx 到 32K 時大約是 512 token 基準的 52%——斜率比 omlx 陡，但全程沒有 dflash 那種懸崖，跟它平穩成長的記憶體曲線是一致的。
+把同一份資料正規化，讓每個框架自己最小脈絡的速度當作 100% 起點（前四個框架是 64 token，mtplx 沒測 64 所以用 512 token）。這樣可以把「KV cache 變大時，decode 慢多少」跟「哪個框架絕對最快」拆開來看。omlx 衰退最少，從 100% 降到 32K 時的 66%；mlx-vlm 相對曲線甚至更平，但這只是因為它的 64 token 起點本來就低。rapid-mlx 到 32K 時掉了大約 42% 的速度。dflash-mlx（v0.1.7）到 32K 時大約是 64 token 基準的 60%——降幅明顯，但沒有懸崖，曲線形狀更接近 rapid-mlx 而不是它自己 v0.1.0 時的崩盤。mtplx 到 32K 時大約是 512 token 基準的 52%——斜率比 omlx 陡，但全程沒有 dflash v0.1.0 時的那種懸崖，跟它平穩成長的記憶體曲線是一致的。
 
 ### 3.3 Decode 穩定性（標準差）
 
@@ -62,28 +64,30 @@ prompt 開頭加了 `/no_think`（Qwen3 用來抑制 reasoning 輸出的慣例�
 
 ![Prefill tps](charts/zh/prefill_tps.png)
 
-Prefill 速度衡量模型消化 prompt 有多快，也就是「打完字到開始吐第一個字之前，模型內部在忙什麼」的速度。dflash-mlx 沒在這張圖裡，因為它的 OpenAI server 沒有在 `usage` 欄位回傳 `prompt_tokens`，要算就得從 TTFT 反推。35B-MoE 那三個能測到的框架都在 4K–8K 區間達到峰值，這是這款硬體上 attention 計算和記憶體頻寬的甜蜜點。mtplx 的 prefill 在絕對值上明顯較低（在 1K 峰值也只有 879 tps），因為 27B dense 模型 prefill 計算量本來就比 MoE 重得多，這也讓它在長 context 時 TTFT 的成本遠大於 decode 成本。
+Prefill 速度衡量模型消化 prompt 有多快，也就是「打完字到開始吐第一個字之前，模型內部在忙什麼」的速度。dflash-mlx 現在也出現在這張圖裡——v0.1.7 在 streaming 的 `usage` 物件裡正確回傳 `prompt_tokens`（v0.1.0 沒有，這是以前這張圖把 dflash 省略掉的原因）。35B-MoE 那四個框架都在 4K–8K 區間達到峰值，這是這款硬體上 attention 計算和記憶體頻寬的甜蜜點。mtplx 的 prefill 在絕對值上明顯較低（在 1K 峰值也只有 879 tps），因為 27B dense 模型 prefill 計算量本來就比 MoE 重得多，這也讓它在長 context 時 TTFT 的成本遠大於 decode 成本。
 
 ### 3.6 TTFT（首字元延遲，對數刻度）
 
 ![TTFT](charts/zh/ttft.png)
 
-TTFT 是使用者實際感受到的延遲，從按下送出到第一個 token 出現之間的等待。y 軸用對數刻度，因為 TTFT 在不同脈絡長度下會跨過將近三個數量級。注意 dflash-mlx 在 32K 處跳到比其他人都高的位置——那是 31 秒的 TTFT，是其他框架的兩倍多。mtplx 在每個 context 都明顯坐在 35B-MoE 四人組之上，到 32K 更是吃到 62 秒——這個配置最大的成本就是弱化的 prefill，所以 mtplx 比較適合短 prompt 而非長 prompt 的應用。
+TTFT 是使用者實際感受到的延遲，從按下送出到第一個 token 出現之間的等待。y 軸用對數刻度，因為 TTFT 在不同脈絡長度下會跨過將近三個數量級。dflash-mlx v0.1.7 在 32K 處落在 11.9 秒——已經和其他 35B-MoE 框架在同一個量級，不再是 v0.1.0 那個離群的 31 秒。mtplx 在每個 context 都明顯坐在 35B-MoE 四人組之上，到 32K 更是吃到 62 秒——這個配置最大的成本就是弱化的 prefill，所以 mtplx 比較適合短 prompt 而非長 prompt 的應用。
 
 ---
 
 ## 四、Decode tps 中位數彙整表
 
-| Prompt size | rapid-mlx | omlx | dflash-mlx | mlx-vlm | mtplx\* |
+| Prompt size | rapid-mlx | omlx | dflash-mlx† | mlx-vlm | mtplx\* |
 |---:|---:|---:|---:|---:|---:|
-| 64 | 124.9 | 123.7 | **167.3** | 95.5 | — |
-| 512 | 119.5 | 119.4 | **122.9** | 94.8 | 59.8 |
+| 64 | 124.9 | 123.7 | **149.5** | 95.5 | — |
+| 512 | 119.5 | 119.4 | **140.0** | 94.8 | 59.8 |
 | 1,024 | — | — | — | — | 49.6 |
-| 2,048 | 102.5 | 121.1 | **160.1** | 88.5 | 55.7 |
-| 4,096 | 97.6 | **120.4** | 104.5 | 91.4 | 43.3 |
-| 8,192 | 90.3 | **118.0** | 96.3 | 87.2 | 43.1 |
-| 16,384 | 83.2 | **105.3** | 84.1 | 83.1 | 41.4 |
-| 32,768 | 72.3 | **82.1** | 12.6 ⚠️ | 67.7 | 31.3 |
+| 2,048 | 102.5 | 121.1 | **153.6** | 88.5 | 55.7 |
+| 4,096 | 97.6 | 120.4 | **126.8** | 91.4 | 43.3 |
+| 8,192 | 90.3 | 118.0 | **122.1** | 87.2 | 43.1 |
+| 16,384 | 83.2 | 105.3 | **103.8** | 83.1 | 41.4 |
+| 32,768 | 72.3 | **82.1** | 89.7 | 67.7 | 31.3 |
+
+† dflash-mlx 那一欄是 2026-05-25 用 v0.1.7 重測的；其他四欄是 2026-05-09 那輪的結果。v0.1.0 的原始 dflash-mlx 數字（包含當時 32K 崩盤的 12.6 tps）保留在 [`reports/03-dflash-mlx_zh.md`](reports/03-dflash-mlx_zh.md)。
 
 \* mtplx 跑的是**不同的模型**（`Youssofal/Qwen3.6-27B-MTPLX-Optimized-Speed`，27B dense）也用了不同的方法（n=1、輸出 128 tokens、MTP depth=3、`disable-thinking`），所以這一欄不能直接和其他欄比較。
 
@@ -113,13 +117,13 @@ TTFT 是使用者實際感受到的延遲，從按下送出到第一個 token �
 
 ## 五、實務選擇建議
 
-如果你的應用是互動式 chat，使用者打一段短訊息然後等回應，**dflash-mlx** 是首選——前提是你能接受多出大約 300 毫秒的首字元延遲。它在短脈絡下每秒 167 token 的 decode 速度比其他框架快很多，而那點 TTFT 的代價通常使用者不會察覺，因為整體回應時間還是被生成階段主導。但如果 TTFT 比吞吐量更重要——例如你希望回應「立刻」開始 stream——那就用 **omlx**：它在小脈絡區間既有最低的中位數 TTFT，也有最低的 TTFT 變異。
+如果你的應用是互動式 chat，使用者打一段短訊息然後等回應，**dflash-mlx** 是首選——前提是你能接受 draft model 暖機帶來的首字元延遲成本。它在短脈絡下每秒 140–154 token 的 decode 速度比其他框架快，而那點 TTFT 的代價通常使用者不會察覺，因為整體回應時間還是被生成階段主導。但如果 TTFT 比吞吐量更重要——例如你希望回應「立刻」開始 stream——那就用 **omlx**：它在小脈絡區間既有最低的中位數 TTFT，也有最低的 TTFT 變異。
 
-對於檢索增強生成、長文件摘要、或是任何把脈絡推到 4K–32K 區間的工作負載，**omlx** 是無懸念的贏家。它在 16K 脈絡下還能維持每秒 100 token 以上，到 32K 也還有 82 token 每秒，而且 run 之間的 decode tps 幾乎不動。在短脈絡 benchmark 表現亮眼的框架不一定撐得過長脈絡，dflash-mlx 就是這次最警示性的反面教材：從班級第一名變成班級災難。
+對於檢索增強生成、長文件摘要、或是任何把脈絡推到 4K–32K 區間的工作負載，**dflash-mlx v0.1.7** 和 **omlx** 都很強。dflash-mlx 在原始 decode 速度上領先（32K 是 90 tps vs omlx 的 82），但 omlx 在穩定度上贏——它 run-to-run 的變異明顯更低，這對要綁 SLA 的 production 來說比峰值吞吐量更重要。要速度選 dflash，要可預期的速度選 omlx。
 
-如果你做的是程式碼生成這種特定場景，即使脈絡到中等長度，**dflash-mlx** 仍然值得考慮，因為程式碼是高度可預測的內容，speculative decoding 在結構化輸出上的命中率比自然語言高得多。我們在自然語言測試的 2K 脈絡看到的是每秒 122 token，而程式碼工作負載可能會比 160 還更好。
+如果你做的是程式碼生成這種特定場景，即使脈絡到中等長度，**dflash-mlx** 仍然值得考慮，因為程式碼是高度可預測的內容，speculative decoding 在結構化輸出上的命中率比自然語言高得多。自然語言測試在 512–2K 區間是 140–154 tps，程式碼工作負載可能會更快。
 
-如果你需要把圖像、聲音、影片送進模型，**mlx-vlm** 是這次測試中唯一的選擇。純文字 decode 慢個 25–30% 是你為了多模態 stack 付出的稅金，但如果你需要視覺能力，這裡沒有別的框架做得到。mlx-vlm 還有一個我們沒測但很有意思的功能：它支援 `--draft-kind dflash`，理論上可以把它的強 prefill 跟 dflash 的 decode 加速結合起來。如果你的脈絡長度受控在 8K 以下，這個組合可能是兩全其美——但要小心 dflash 的 32K 問題會不會被一起繼承過來。
+如果你需要把圖像、聲音、影片送進模型，**mlx-vlm** 是這次測試中唯一的選擇。純文字 decode 慢個 25–30% 是你為了多模態 stack 付出的稅金，但如果你需要視覺能力，這裡沒有別的框架做得到。mlx-vlm 還有一個我們沒測但很有意思的功能：它支援 `--draft-kind dflash`，理論上可以把它的強 prefill 跟 dflash 的 decode 加速結合起來。
 
 **mtplx** 跑那個速度優化過的 27B 模型，比較適合「瓶頸在記憶體而不是 token/秒」或「prompt 短」的情境。即便到 32K 脈絡，尖峰記憶體仍維持在 23 GB 以下，因此 36 GB 統一記憶體的 M 系列 Mac 仍有充足空間；代價是 decode 速度落在 30–60 tps 之間（取決於 context）。這個組合適合「短 prompt + 長輸出」的生成情境（草稿、程式碼補完、結構化輸出）在記憶體受限的機器上跑，反過來不適合長脈絡 RAG，因為那種場景 TTFT 會把總延遲拉滿。
 
@@ -129,9 +133,9 @@ TTFT 是使用者實際感受到的延遲，從按下送出到第一個 token �
 
 ## 六、結論
 
-這次 benchmark 跑出了一個清楚的型態：**omlx 是綜合表現最好的長脈絡框架**。它在 4K 以上的所有指標都贏或打平，變異最低，decode tps 隨脈絡變長的衰退曲線最平緩。它的設定門檻稍高（模型必須放在指定目錄，不能直接讀 HuggingFace cache），但對 production 用途來說是最值得信賴的預設選項。
+這次 benchmark 跑出了兩個互補的贏家。**dflash-mlx（v0.1.7）是全程最快的**——它的 speculative decoding 架構在每個測試的脈絡長度都拿到最高的 decode tps，包括 32K——原本 v0.1.0 在那裡的硬懸崖，已經被 v0.1.0 和 v0.1.7 之間推出的 adaptive verify mode 修掉了。**omlx 是穩定優先框架的代表**——它讓出了大約 10% 的峰值 decode 給 dflash，但換來明顯更低的 run-to-run 變異跟這次測試最低的 TTFT 變異。對 p99 比中位數更重要的 production 部署來說，omlx 仍然是最值得信賴的預設選項。
 
-**dflash-mlx 是這次最有意思的個案**。它的 speculative decoding 架構在小脈絡確實能拿出 35% 的 decode 加速，但長脈絡下「同時跑一個 draft 模型」的代價變得無法承擔。draft 網路也得處理整個 prompt，draft 與 main 之間的 verify 流程則成了瓶頸。到了 32K，speculative decoding 的額外開銷已經超過直接 decode 的成本，框架的 decode 速率掉到每秒 12.6 token——說實話這個數字根本不能用。請把 dflash-mlx 當成「短脈絡 + 可預測產出」的特化工具。
+**dflash 的故事在你選它之前值得了解一下**。在原本 2026-05-09 那輪測試的 dflash-mlx 版本（v0.1.0）32K 崩到 12.6 tps——比其他框架慢 6 倍——因為 draft 預測準確度在長脈絡下崩壞，verify-then-rollback 的 overhead 開始主導每個 token 的成本。v0.1.7 加入了 adaptive verify mode，在 draft 命中率低時縮短 verify block 而不是在每次 miss 都付完整 verify 成本，加上可調的 verify-len cap，這就把懸崖消掉了。如果你在 2026 年 5 月之前試過 dflash-mlx 跑長脈絡、結論是它不堪用，值得重測一次。
 
 **rapid-mlx 是穩當的中堅**。它在任何尺寸都不是絕對最快，但也從來不會離冠軍太遠。它的主要弱點是小脈絡下的 TTFT 抖動：在 64 token 我們量到的中位數是 169 ms，但標準差高達 136 ms——意思是某些 request 不為什麼就慢了將近一倍。如果你的應用能容忍這種變異，rapid-mlx 仍然是個好選擇，而且它的功能組合最豐富（paged KV cache、MTP、prefix cache、KV 量化都有）。
 
@@ -152,7 +156,9 @@ mlx_benchmark_lab/
 ├── data/                         # 原始 JSONL（每行一次 run）
 │   ├── rapid_v5.jsonl
 │   ├── omlx_v5.jsonl
-│   ├── dflash_v5.jsonl
+│   ├── dflash_v5.jsonl           # dflash-mlx v0.1.0（保留作參考）
+│   ├── dflash_v6.jsonl           # dflash-mlx v0.1.7，cooldown=2（目前主資料）
+│   ├── dflash_v6_c60.jsonl       # dflash-mlx v0.1.7，cooldown=60（熱降頻研究）
 │   ├── vlm_v5.jsonl
 │   └── mtplx_v5.jsonl            # mtplx + Qwen3.6-27B-MTPLX-Optimized-Speed（n=1）
 ├── logs/                         # 完整測試 log
@@ -229,8 +235,6 @@ bench 腳本本身會處理 streaming、解析 Server-Sent Events、把 thinking
 
 mlx-vlm + dflash 的組合我們有發現但沒測到。這可能是最值得做的後續實驗：vlm 在中等脈絡的 prefill 最強、dflash 在短脈絡的 decode 最快，把兩者疊加可以驗證效果是相加還是相互干擾。
 
-`/no_think` 在這次只被部分尊重——mlx-vlm 和 dflash-mlx 完全不輸出 thinking，但 rapid-mlx 和 omlx 仍然會吐 reasoning token。這兩個框架的 decode tps 數字其實混合了 thinking token 的速率和可見內容的速率，雖然兩者速度接近但並不完全相同。更嚴謹的後續做法是透過 chat template 的 `enable_thinking=false` 參數而不是 prompt 內的慣例。
-
-dflash-mlx 的 OpenAI 相容 server 沒回傳 `prompt_tokens`，導致我們無法直接算 prefill tps，只能從 TTFT 反推或自己做 tokenization。我們選擇直接把 dflash 從 prefill 圖裡拿掉。如果 dflash-serve 之後願意補上 `usage.prompt_tokens`，後續比較就會乾淨很多。
+`/no_think` 在這次只被部分尊重——mlx-vlm 和 dflash-mlx 完全不輸出 thinking，但 rapid-mlx 和 omlx 仍然會吐 reasoning token。這兩個框架的 decode tps 數字其實混合了 thinking token 的速率和可見內容的速率，雖然兩者速度接近但並不完全相同。更嚴謹的後續做法是透過 chat template 的 `enable_thinking=false` 參數而不是 prompt 內的慣例。（dflash-mlx v0.1.7 在 CLI 接受 `--chat-template-args '{"enable_thinking":false}'`，我們重測時用的就是這個。）
 
 最後，我們沒有測超過 32K 的脈絡。在 64K 與 128K 下，KV cache 會變成主要的記憶體佔用（這個模型 fp16 KV 大約是 16 GB 與 32 GB），這時測出來的差異會包含很多記憶體壓力的成分而不只是計算速度。對某些應用來說這個區段才是真正關鍵，是個值得回頭再做的後續題目。

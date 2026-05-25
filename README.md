@@ -8,7 +8,9 @@ This repository contains the raw data, scripts, and analysis from a head-to-head
 
 A fifth framework, **mtplx**, was added in a later run against a *different* model (`Youssofal/Qwen3.6-27B-MTPLX-Optimized-Speed`, a 27B dense model purpose-built for MTPLX with speculative-decoding optimizations). Because the model differs from the four-framework comparison, mtplx is plotted with a dashed line and marked with `*` in tables — its numbers are interesting on their own merits but not directly comparable to the others. See [§4.1 mtplx (different model)](#41-mtplx-different-model) for the standalone results and methodology.
 
-The short version of the conclusion: if you mostly serve long-context workloads (RAG, document summarization, code analysis on big files), use **omlx** — it has the fastest decode speed from 4K context onward and the most stable timing of any framework tested. If your prompts are short and your output is structured or predictable, **dflash-mlx** is the fastest by a wide margin at 64–2,048 tokens because its speculative decoding hits often on those workloads. But dflash-mlx fails catastrophically at 32K, dropping to 12.6 tokens per second — roughly six times slower than the others — so you absolutely cannot use it for long-context applications. **mlx-vlm** is the only framework here that supports image, video, and audio input, but for pure text it runs about 25–30% slower than the others, so reach for it only when you actually need multimodal capability. **mtplx** running its speed-optimized 27B model decodes at 31–60 tokens per second across the ladder with steady memory growth (15.6 GB at 512 tokens, 22.1 GB at 32K), so its appeal is the predictable memory envelope rather than peak throughput.
+The short version of the conclusion: **dflash-mlx** wins decode speed at every tested context length once you're using a current build — it leads at 4K through 32K (127, 122, 104, 90 tps medians) and is competitive at short context (140–154 tps from 512 to 2K). **omlx** is the boring-but-dependable choice when stability matters more than peak — it has the gentlest decode-tps degradation curve and the lowest TTFT variance, which makes it the easiest framework to build SLAs around. **rapid-mlx** is the dependable middle option — never the leader, never far from it. **mlx-vlm** is the only framework here that supports image, video, and audio input, but for pure text it runs about 25–30% slower than the others, so reach for it only when you actually need multimodal capability. **mtplx** running its speed-optimized 27B model decodes at 31–60 tokens per second across the ladder with steady memory growth (15.6 GB at 512 tokens, 22.1 GB at 32K), so its appeal is the predictable memory envelope rather than peak throughput.
+
+> **Note on dflash-mlx numbers.** The dflash-mlx row was re-tested on 2026-05-25 against dflash-mlx **v0.1.7** after a community contributor noted that the original v0.1.0 sweep showed a since-fixed 32K collapse (12.6 tps). The numbers in the headline table below are from v0.1.7, methodology-matched to the other frameworks (`cooldown=2`, `n=5`, `max_tokens=256`, prefix cache disabled). The original v0.1.0 numbers and the full story of the regression-and-fix live in [`reports/03-dflash-mlx.md`](reports/03-dflash-mlx.md).
 
 ---
 
@@ -38,13 +40,13 @@ The benchmark client is at [`scripts/bench_inline.py`](scripts/bench_inline.py);
 
 ![Decode tps](charts/decode_tps.png)
 
-This is the headline chart. It plots median decode tokens per second against prompt context length. The picture tells the story: dflash-mlx (red) has dramatic peaks at 64 and 2,048 tokens where speculative decoding lands well, but its line cliff-dives at 32K. omlx (green) is the boring-but-effective straight line that beats everything from 4K onward. rapid-mlx (blue) starts strong at small context but degrades faster than omlx as context grows. mlx-vlm (orange) is consistently the slowest but also the flattest line. The dashed purple line is mtplx running its 27B speed-optimized model — it sits well below the four 35B-MoE frameworks because the 27B dense weights are heavier per active parameter, but the curve from 4K onward is unusually flat (43→31 tps from 4K to 32K).
+This is the headline chart. It plots median decode tokens per second against prompt context length. dflash-mlx (red, v0.1.7) leads across the entire range — its 2K peak comes from speculative decoding hitting well on natural-language summarization, and the line stays above the others all the way to 32K. omlx (green) is the boring-but-effective straight line — second-best at long context with the lowest variance. rapid-mlx (blue) starts strong at small context but degrades faster than omlx as context grows. mlx-vlm (orange) is consistently the slowest but also the flattest line. The dashed purple line is mtplx running its 27B speed-optimized model — it sits well below the four 35B-MoE frameworks because the 27B dense weights are heavier per active parameter, but the curve from 4K onward is unusually flat (43→31 tps from 4K to 32K).
 
 ### 3.2 Decode degradation curve
 
 ![Degradation](charts/degradation.png)
 
-The same data normalized so each framework starts at 100% of its own smallest-context baseline (64 tokens for the original four; 512 tokens for mtplx, which wasn't run at 64). This isolates "how much does decoding slow down as the KV cache grows" from "which framework is fastest in absolute terms." omlx degrades the least (from 100% to 66% of baseline at 32K), mlx-vlm is even flatter relatively but only because its baseline was already lowest. rapid-mlx loses about 42% of its speed by 32K. dflash-mlx falls off a cliff: by 32K it's running at 7.5% of its 64-token speed. mtplx ends up at about 52% of its 512-token baseline at 32K — a steeper drop than omlx but with no cliff, which matches its calmer memory profile.
+The same data normalized so each framework starts at 100% of its own smallest-context baseline (64 tokens for the original four; 512 tokens for mtplx, which wasn't run at 64). This isolates "how much does decoding slow down as the KV cache grows" from "which framework is fastest in absolute terms." omlx degrades the least (from 100% to 66% of baseline at 32K), mlx-vlm is even flatter relatively but only because its baseline was already lowest. rapid-mlx loses about 42% of its speed by 32K. dflash-mlx (v0.1.7) lands at about 60% of its 64-token baseline at 32K — a meaningful drop, but no cliff, and closer to the rapid-mlx shape than to its own previous v0.1.0 collapse. mtplx ends up at about 52% of its 512-token baseline at 32K — a steeper drop than omlx but with no cliff, which matches its calmer memory profile.
 
 ### 3.3 Decode stability (standard deviation)
 
@@ -62,28 +64,30 @@ Boxplots of decode tps for each (framework, context) cell. The boxes show the in
 
 ![Prefill tps](charts/prefill_tps.png)
 
-Prefill tokens per second measures how fast the model digests the prompt before it starts generating. dflash-mlx isn't shown because its OpenAI server doesn't return `prompt_tokens` in `usage` — we'd have to back it out from TTFT. The three 35B-MoE frameworks we can measure all peak in the 4K–8K range, which is the sweet spot for the attention-and-bandwidth tradeoff on this hardware. mtplx's prefill is dramatically lower in absolute terms (peaks at 879 tps at 1K) because the 27B dense model is more prefill-heavy per token, and its TTFT cost dominates total latency well before decode does.
+Prefill tokens per second measures how fast the model digests the prompt before it starts generating. dflash-mlx now appears on this chart — v0.1.7 returns `prompt_tokens` in the streaming `usage` object (v0.1.0 didn't, which is why earlier versions of this chart omitted it). The four 35B-MoE frameworks all peak in the 4K–8K range, which is the sweet spot for the attention-and-bandwidth tradeoff on this hardware. mtplx's prefill is dramatically lower in absolute terms (peaks at 879 tps at 1K) because the 27B dense model is more prefill-heavy per token, and its TTFT cost dominates total latency well before decode does.
 
 ### 3.6 TTFT (time to first token, log scale)
 
 ![TTFT](charts/ttft.png)
 
-Time to first token is what your end user perceives as latency before the model starts streaming. The y-axis is log scale because TTFT spans nearly three orders of magnitude across context lengths. Note dflash-mlx jumping above the rest at 32K — that's the 31-second TTFT, more than twice everyone else. mtplx sits noticeably above the four 35B-MoE frameworks at every context length and reaches 62 seconds at 32K — its weaker prefill is the single biggest tax this configuration pays, so mtplx is much more attractive for short prompts than long ones.
+Time to first token is what your end user perceives as latency before the model starts streaming. The y-axis is log scale because TTFT spans nearly three orders of magnitude across context lengths. dflash-mlx v0.1.7 lands at 11.9s at 32K — within the same band as the other 35B-MoE frameworks, no longer the outlier the v0.1.0 sweep showed. mtplx sits noticeably above the four 35B-MoE frameworks at every context length and reaches 62 seconds at 32K — its weaker prefill is the single biggest tax this configuration pays, so mtplx is much more attractive for short prompts than long ones.
 
 ---
 
 ## 4. Decode tps median summary table
 
-| Prompt size | rapid-mlx | omlx | dflash-mlx | mlx-vlm | mtplx\* |
+| Prompt size | rapid-mlx | omlx | dflash-mlx† | mlx-vlm | mtplx\* |
 |---:|---:|---:|---:|---:|---:|
-| 64 | 124.9 | 123.7 | **167.3** | 95.5 | — |
-| 512 | 119.5 | 119.4 | **122.9** | 94.8 | 59.8 |
+| 64 | 124.9 | 123.7 | **149.5** | 95.5 | — |
+| 512 | 119.5 | 119.4 | **140.0** | 94.8 | 59.8 |
 | 1,024 | — | — | — | — | 49.6 |
-| 2,048 | 102.5 | 121.1 | **160.1** | 88.5 | 55.7 |
-| 4,096 | 97.6 | **120.4** | 104.5 | 91.4 | 43.3 |
-| 8,192 | 90.3 | **118.0** | 96.3 | 87.2 | 43.1 |
-| 16,384 | 83.2 | **105.3** | 84.1 | 83.1 | 41.4 |
-| 32,768 | 72.3 | **82.1** | 12.6 ⚠️ | 67.7 | 31.3 |
+| 2,048 | 102.5 | 121.1 | **153.6** | 88.5 | 55.7 |
+| 4,096 | 97.6 | 120.4 | **126.8** | 91.4 | 43.3 |
+| 8,192 | 90.3 | 118.0 | **122.1** | 87.2 | 43.1 |
+| 16,384 | 83.2 | 105.3 | **103.8** | 83.1 | 41.4 |
+| 32,768 | 72.3 | **82.1** | 89.7 | 67.7 | 31.3 |
+
+† dflash-mlx row is from a v0.1.7 re-test on 2026-05-25; the other four columns are from the 2026-05-09 sweep. Original v0.1.0 dflash-mlx numbers (which had a 32K collapse to 12.6 tps) are preserved in [`reports/03-dflash-mlx.md`](reports/03-dflash-mlx.md).
 
 \* mtplx ran a *different* model (`Youssofal/Qwen3.6-27B-MTPLX-Optimized-Speed`, 27B dense) and a different methodology (n=1, 128 output tokens, MTP depth=3, `disable-thinking`), so its column is not directly comparable to the others.
 
@@ -113,13 +117,13 @@ The weak spot is TTFT. Prefill tops out below 900 tps and the 32K cell costs ove
 
 ## 5. Practical recommendations
 
-For an interactive chat application where the user types a short message and waits for a response, dflash-mlx is the right choice if you can tolerate roughly 300 milliseconds of extra time-to-first-token. Its 167 tokens-per-second decode at short context is dramatically faster than the alternatives, and the slightly worse TTFT often goes unnoticed because total response time is still dominated by the generation phase. If TTFT matters more than throughput — say, you want responses to start streaming as quickly as possible — use omlx; it has both the lowest median TTFT and the lowest TTFT variance across the small-context range.
+For an interactive chat application where the user types a short message and waits for a response, dflash-mlx is the right choice if you can tolerate the extra time-to-first-token cost of warming the draft model. Its 140–154 tokens-per-second decode at short context is faster than the alternatives, and the slightly worse TTFT often goes unnoticed because total response time is still dominated by the generation phase. If TTFT matters more than throughput — say, you want responses to start streaming as quickly as possible — use omlx; it has both the lowest median TTFT and the lowest TTFT variance across the small-context range.
 
-For retrieval-augmented generation, long-document summarization, or any workload that pushes context into the 4K–32K range, omlx is the clear winner. It maintains over 100 tokens per second through 16K context, hits 82 tokens per second even at 32K, and its decode tps barely moves between runs. Frameworks that look great in short-context benchmarks may not survive the move to long context — dflash-mlx is the cautionary tale here, going from class leader to class disaster as context grows.
+For retrieval-augmented generation, long-document summarization, or any workload that pushes context into the 4K–32K range, dflash-mlx v0.1.7 and omlx are both strong. dflash-mlx leads on raw decode (90 tps at 32K vs omlx's 82) but omlx wins on stability — its run-to-run variance is dramatically lower, which matters more for SLA-bound production than peak throughput does. Pick dflash if you want speed; pick omlx if you want predictable speed.
 
-For code generation specifically, dflash-mlx is worth considering even at moderate context lengths because code is highly predictable and speculative decoding hits more often on structured output than on free-form natural language. We saw 160 tokens per second at 2K context where the natural-language test produced only 122 — your code-completion workload might do better than even that.
+For code generation specifically, dflash-mlx is worth considering even at moderate context lengths because code is highly predictable and speculative decoding hits more often on structured output than on free-form natural language. The natural-language test produced 140–154 tps in the 512–2K range; your code-completion workload might do better than that.
 
-If you need to serve images, audio, or video to the model, mlx-vlm is the only choice in this set. The 25–30% slower text decode is a tax you pay for the multimodal stack, but if you need vision capability, no other framework here can deliver it. mlx-vlm does have an interesting feature we did not test: it supports `--draft-kind dflash`, which would in theory combine its strong prefill performance with dflash's decode speedup. If your context lengths are bounded under 8K, this combination might be the best of both worlds — but be aware of dflash's 32K problem.
+If you need to serve images, audio, or video to the model, mlx-vlm is the only choice in this set. The 25–30% slower text decode is a tax you pay for the multimodal stack, but if you need vision capability, no other framework here can deliver it. mlx-vlm does have an interesting feature we did not test: it supports `--draft-kind dflash`, which would in theory combine its strong prefill performance with dflash's decode speedup.
 
 mtplx on the 27B speed-optimized model is worth considering if your bottleneck is memory rather than tokens-per-second, or if your prompts are short. Peak memory stays under 23 GB even at 32K context, so an M-series Mac with 36 GB unified memory has plenty of headroom; the cost is a decode rate that lands between 30 and 60 tps depending on context. It's a good fit for short-prompt, long-output generation (drafting, code completion, structured output) on memory-constrained machines, and a poor fit for long-context RAG where TTFT dominates total latency.
 
@@ -129,9 +133,9 @@ For production deployments where stability and predictability matter more than p
 
 ## 6. Conclusions
 
-The benchmark exposed a clear pattern: **omlx is the strongest all-around long-context framework**. It wins or ties every metric from 4K context onward, has the lowest variance, and has the gentlest decode-tps degradation curve as context grows. Setup is a little more involved (it expects models in a specific directory rather than reading from your HuggingFace cache directly), but for production use it's the most defensible default.
+The benchmark exposed two complementary winners. **dflash-mlx (v0.1.7) is the fastest across the board** — its speculative-decoding architecture delivers the highest decode tps at every context length we tested, including 32K where the original v0.1.0 sweep showed a hard cliff that has since been fixed by an adaptive verify mode shipped between v0.1.0 and v0.1.7. **omlx is the strongest stability-first framework** — it gives up roughly 10% of peak decode to dflash but in exchange offers dramatically lower run-to-run variance and the lowest TTFT variance in this benchmark. For production deployments where p99 matters more than median, omlx remains the most defensible default.
 
-**dflash-mlx is the most interesting case**. Its speculative-decoding architecture genuinely delivers a 35% decode speedup at small context, but the architectural cost of running a draft model alongside the main model becomes ruinous at long context. The draft network has to process the full prompt too, and the verification phase between draft and main becomes the bottleneck. By 32K, the speculative-decoding overhead exceeds the cost of just decoding directly — and the framework's decode rate falls to 12.6 tokens per second, which is honestly unusable. Treat dflash-mlx as a specialized tool for short-context workloads with predictable output.
+**The dflash story is worth understanding before you choose it**. The version of dflash-mlx tested in the original 2026-05-09 sweep (v0.1.0) collapsed to 12.6 tps at 32K — six times slower than the other frameworks — because draft prediction accuracy fell off at long context and the verify-then-rollback overhead came to dominate per-token cost. v0.1.7 added an adaptive verify mode that shortens low-acceptance verify blocks instead of paying full verify cost on every miss, plus a tunable verify-len cap, and that eliminates the cliff. If you tried dflash-mlx at long context before May 2026 and concluded it didn't work, it's worth retesting.
 
 **rapid-mlx is the dependable middle option**. It's never the absolute fastest at any size, but it's never far from the leader either. Its main weakness is TTFT jitter at small context, where we measured a standard deviation of 136 milliseconds against a median of 169 milliseconds — meaning some requests are nearly twice as slow as others for no obvious reason. If your application can tolerate that variance, rapid-mlx is a solid choice with the most flexible feature set (paged KV cache, MTP, prefix cache, KV quantization).
 
@@ -152,7 +156,9 @@ mlx_benchmark_lab/
 ├── data/                         # Raw JSONL (one run per line)
 │   ├── rapid_v5.jsonl
 │   ├── omlx_v5.jsonl
-│   ├── dflash_v5.jsonl
+│   ├── dflash_v5.jsonl           # dflash-mlx v0.1.0 (preserved for reference)
+│   ├── dflash_v6.jsonl           # dflash-mlx v0.1.7, cooldown=2 (current)
+│   ├── dflash_v6_c60.jsonl       # dflash-mlx v0.1.7, cooldown=60 (thermal study)
 │   ├── vlm_v5.jsonl
 │   └── mtplx_v5.jsonl            # mtplx + Qwen3.6-27B-MTPLX-Optimized-Speed (n=1)
 ├── logs/                         # Full test logs
@@ -229,8 +235,6 @@ We tested only the 4-bit MoE model. Dense models (e.g., Qwen3-32B-Dense) and lar
 
 The mlx-vlm + dflash combination was identified but not measured. It might be the most interesting follow-up: vlm has the strongest prefill at mid-context, dflash has the strongest decode at short context, and combining them would test whether the speedups stack or interfere.
 
-`/no_think` was honored partially — mlx-vlm and dflash-mlx fully respect it, but rapid-mlx and omlx still emit reasoning tokens. The decode tps numbers from those two therefore mix thinking-token throughput with visible-content throughput, and although the rates are similar, they're not identical. A more rigorous follow-up would set `enable_thinking=false` via the chat-template parameter rather than relying on the in-prompt convention.
-
-dflash-mlx's OpenAI-compatible server doesn't return `prompt_tokens` in its `usage` object, which means we couldn't compute prefill tps for it without resorting to externally-tokenized prompt counts. We instead omitted dflash from the prefill chart. A small patch to dflash-serve to populate `usage.prompt_tokens` would make future comparisons cleaner.
+`/no_think` was honored partially — mlx-vlm and dflash-mlx fully respect it, but rapid-mlx and omlx still emit reasoning tokens. The decode tps numbers from those two therefore mix thinking-token throughput with visible-content throughput, and although the rates are similar, they're not identical. A more rigorous follow-up would set `enable_thinking=false` via the chat-template parameter rather than relying on the in-prompt convention. (dflash-mlx v0.1.7 accepts `--chat-template-args '{"enable_thinking":false}'` at the CLI, which is what we used for the re-test.)
 
 Finally, we didn't go beyond 32K context. At 64K and 128K the KV cache becomes a major memory consumer (roughly 16 GB and 32 GB respectively for this model in fp16), and the comparison would start measuring memory pressure as much as compute speed. That's an important regime for some applications and we'd like to revisit it.

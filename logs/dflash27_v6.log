@@ -128,3 +128,35 @@ huggingface_hub.errors.GatedRepoError: 401 Client Error. (Request ID: Root=1-6a1
 
 Cannot access gated repo for url https://huggingface.co/z-lab/Qwen3.6-27B-DFlash/resolve/0919688658996800f86b895034249700e9481106/config.json.
 Access to model z-lab/Qwen3.6-27B-DFlash is restricted. You must have access to it and be authenticated to access it. Please log in.
+Traceback (most recent call last):
+  File "/Users/david/.pyenv/versions/3.13.13/bin/dflash", line 6, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/cli.py", line 54, in main
+    raise SystemExit(run(argv))
+                     ~~~^^^^^^
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/cli.py", line 36, in run
+    return _run_module_main("dflash_mlx.serve", "dflash serve", args[1:])
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/cli.py", line 59, in _run_module_main
+    module.main(list(args), prog=prog)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/serve.py", line 426, in main
+    ).serve_forever(
+      ~~~~~~~~~~~~~^
+        response_generator_factory=DFlashResponseGenerator,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        handler_class=DFlashAPIHandler,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/server/runtime.py", line 257, in serve_forever
+    self.wait_until_ready(timeout_s=300.0)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/server/runtime.py", line 217, in wait_until_ready
+    wait_for_initial_model_load(self.model_provider, timeout_s=timeout_s)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.pyenv/versions/3.13.13/lib/python3.13/site-packages/dflash_mlx/server/model_provider.py", line 142, in wait_for_initial_model_load
+    raise RuntimeError(
+    ...<2 lines>...
+    )
+RuntimeError: DFlash generation worker failed to publish a complete runtime bundle within 300.0s; check earlier log lines for the underlying error.
