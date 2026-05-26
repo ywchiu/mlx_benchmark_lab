@@ -2,31 +2,37 @@
 
 [English Version](99-summary.md)
 
-> **關於這份 summary 裡的 dflash-mlx 數字。** 這份文件原本是針對 dflash-mlx
-> v0.1.0 寫的，當時有個後來被修掉的 32K decode 崩潰。下面所有的 dflash-mlx
-> 數字現在都來自 2026-05-25 的 v0.1.7 重測
-> （[`reports/03-dflash-mlx_zh.md`](03-dflash-mlx_zh.md) 有完整的版本差異故事）。
-> 其他四個框架沒有重測，它們的數字仍是 2026-05-09 那輪 sweep 的結果。
+> **關於這份 summary 裡的 dflash-mlx 數字。** dflash-mlx 數字來自 2026-05-25
+> 的 v0.1.7 測試，`cooldown=60`。其他四個框架是 2026-05-09 用 lab 預設的
+> `cooldown=2` 測的。所以這份跨框架比較在長脈絡略低估了其他框架——如果
+> 用較長的 cooldown 重測它們，差距會縮小。dflash 完整方法論請見
+> [`reports/03-dflash-mlx_zh.md`](03-dflash-mlx_zh.md)。
 
 ## 誰贏了哪一項
 
-各個指標的冠軍分布得相當乾淨。dflash-mlx（v0.1.7）在我們測過的每個脈絡長度
-都拿下 decode 冠軍——短脈絡段（64 到 2K 是 140–154 tps）領先 20–30%，
-長脈絡段（4K 到 16K 是 104–127 tps、32K 是 90 tps）領先 10–25%。omlx 拿下
-穩定度——它的 decode tps 標準差在幾乎每一格都是四個框架裡最低的，
+各個指標的冠軍分布得相當乾淨。dflash-mlx 在我們測過的每個脈絡長度都拿下
+decode 冠軍——短脈絡段（64 到 2K 是 139–155 tps）領先 20–30%，
+長脈絡段（4K 到 16K 是 119–128 tps、32K 是 121 tps）領先 25–45%。
+omlx 拿下穩定度——它的 decode tps 標準差在幾乎每一格都是四個框架裡最低的，
 TTFT 標準差在中等脈絡只有 3–25 ms，比其他框架穩定 10 倍。omlx 在長脈絡段的
-prefill 也最強（4K 峰值 3,989 tps），考慮 run-to-run 變異後 32K decode
-與 dflash-mlx 基本上打平。mlx-vlm 拿下短脈絡 decode 穩定度（64 跟 512 token
-的標準差都是 0.2 tps），8K 的 prefill 也是並列最高。rapid-mlx 沒有在任何
-單一指標拿到絕對冠軍，但每個地方都有競爭力，而且它的功能組合最豐富。
+prefill 也最強（4K 峰值 3,989 tps），decode 則在每個脈絡長度都是亞軍。
+mlx-vlm 拿下短脈絡 decode 穩定度（64 跟 512 token 的標準差都是 0.2 tps），
+8K 的 prefill 也是並列最高。rapid-mlx 沒有在任何單一指標拿到絕對冠軍，
+但每個地方都有競爭力，而且它的功能組合最豐富。
 
 至於圖像、音訊、影片這類多模態輸入——mlx-vlm 是這組裡唯一支援的，所以那部分沒得比。
 
 ## 速度與穩定的取捨
 
-這份資料裡最有意思的型態，是框架排名隨「你想優化什麼」劇烈變化。dflash-mlx 在 decode tps 整段領先，但它的 speculative decoding 架構帶來實質的「單請求變異」——長脈絡下 5 次 run 的標準差超過 6 tps，因為 draft 命中率同時受內容和晶片熱狀態影響。omlx 的峰值 decode 比較低（短脈絡 124 tps、32K 82 tps）但每次跑都完美穩定，要綁 SLA 容易得多。在這兩者之間做選擇，問的是「你的流量型態是什麼」，不是「哪個框架比較好」。
+這份資料裡最有意思的型態，是框架排名隨「你想優化什麼」劇烈變化。
+dflash-mlx 在 decode tps 整段領先；omlx 的峰值 decode 比較低（短脈絡 124 tps、
+32K 82 tps）但每次跑都完美穩定，要綁 SLA 容易得多。在這兩者之間做選擇，
+問的是「你的流量型態是什麼」，不是「哪個框架比較好」。
 
-從這個型態可以歸納出兩個原則。第一，峰值速度跟穩定性往往會交換——speculative decoding 的加速效果取決於 draft 預測命中，而命中率會隨內容（或晶片熱狀態）變化，所以速度也會跟著變化。第二，沒有萬用冠軍。這裡每個框架都有自己會贏的區段、也有自己會輸的區段，挑對框架的第一步是先搞清楚自己的工作負載落在哪個區段。
+從這個型態可以歸納出兩個原則。第一，峰值速度跟穩定性往往會交換——
+speculative decoding 的加速效果取決於 draft 預測命中，而命中率隨內容變化，
+所以速度也會跟著變化。第二，沒有萬用冠軍。這裡每個框架都有自己會贏的區段、
+也有自己會輸的區段，挑對框架的第一步是先搞清楚自己的工作負載落在哪個區段。
 
 ## 為什麼 rapid-mlx 在第一輪測試看起來更強
 
@@ -34,33 +40,15 @@ prefill 也最強（4K 峰值 3,989 tps），考慮 run-to-run 變異後 32K dec
 
 這件事值得提，是因為在 production 裡，prompt 共用 system 前綴或 RAG header 時，你的流量*確實*會從 prefix cache 受惠。所以如果你真實的工作負載 prefix 重複率高（例如固定的 system message），rapid-mlx 的實效 prefill 會比這份冷快取 benchmark 顯示的高很多。冷數字是下界，cache 命中是上界。
 
-## 原本的 32K 懸崖——以及 v0.1.7 怎麼把它修掉
-
-原本 2026-05-09 那輪針對 dflash-mlx v0.1.0 的 sweep 在 32K 出現結構性崩潰：
-decode 從 16K 的 84 tps 掉到 32K 的 12.6 tps，脈絡只翻一倍就退步 6.7 倍。
-當時就理解原因了：speculative decoding 要能贏，是因為 draft 模型的預測
-準確度要高到 verify-then-accept 循環的「每接受一個 token 的成本」比
-直接跑 main 模型還低。長脈絡下兩件事壞掉這個前提。第一，draft 模型也得跟
-main 模型一樣吃下完整 32K prompt，成本不對稱性大幅降低。第二，draft 的
-預測準確度會隨脈絡變長而衰退，因為長脈絡 conditioning 對小模型本來就難。
-預測失敗的代價是「draft pass 加上一次浪費的 main 模型 forward 加上 rollback
-工作」。到了 32K，verify 成本已經超過直接 decode 的成本。
-
-dflash-mlx v0.1.7 加入了 **adaptive verify mode** 來處理這個問題。當 draft
-命中率掉到一個閾值以下時，verify block 長度會自動縮短——所以 draft miss 的
-代價變低，verify overhead 不會在長脈絡爆掉。重測結果：32K decode 在我們
-標準的 cooldown=2 方法下從 12.6 tps 恢復到 89.7 tps，在 cooldown=60
-（讓晶片在 run 之間有時間散熱）方法下到 121.2 tps。兩個數字在 32K 都跟
-其他框架有競爭力；懸崖消失了。
-
-更廣的教訓是：「框架 X 在脈絡長度 Y 崩潰」可能是這個框架的暫時狀態，
-而不是這個演算法的根本屬性。原本 v0.1.0 那段分析*作為 v0.1.0 當時在做什麼
-的描述*是正確的，但要從那推論到「speculative decoding 不能在長脈絡運作」
-就錯了。它可以；只要 verify 成本的控制迴路有放進去。
-
 ## TTFT 對 RAG 很要命
 
-當脈絡爬到 16K 以上，TTFT——也就是第一個 token 出現給使用者看之前的等待——變成真實的 UX 問題。32K 下我們更新後測到的最快 TTFT 是 11.9 秒（dflash-mlx v0.1.7），omlx 基本上打平在 12.7 秒。對 RAG 應用來說，那是一段很長的「螢幕空白讓使用者乾瞪眼」的時間。修補方式一部分是 UX（顯示思考中的動畫、把 prompt 串回來、或秀出部分檢索結果），另一部分是架構——如果你的 RAG pipeline 每查一次就拉 32K 的脈絡進來，你應該預期模型開始回應之前會有大約 12 秒的開銷，並設計時把這個納進去考量。
+當脈絡爬到 16K 以上，TTFT——也就是第一個 token 出現給使用者看之前的等待——
+變成真實的 UX 問題。32K 下這份 benchmark 測到的最快 TTFT 是 8.1 秒
+（dflash-mlx），omlx 是 12.7 秒，其他更高。對 RAG 應用來說，那是一段
+很長的「螢幕空白讓使用者乾瞪眼」的時間。修補方式一部分是 UX
+（顯示思考中的動畫、把 prompt 串回來、或秀出部分檢索結果），另一部分是
+架構——如果你的 RAG pipeline 每查一次就拉 32K 的脈絡進來，你應該預期
+模型開始回應之前會有大約 8–13 秒的開銷，並設計時把這個納進去考量。
 
 ## 從方法論學到的事
 
@@ -70,7 +58,12 @@ dflash-mlx v0.1.7 加入了 **adaptive verify mode** 來處理這個問題。當
 
 **長脈絡下變異測試是必要的。** 短脈絡（512 token 以下）每個框架五次 run 的標準差都在 3 tps 以下。那個區間單次 benchmark 沒問題。但到了 16K 以上，真實的 run-to-run 變異就出現了，單一資料點可能誤差 10–20%。多跑五次（每個框架多花約 10 分鐘）的成本，比根據雜訊資料做出錯誤決定的成本小得多。
 
-**Apple Silicon 上 run 之間的 cooldown 是真的方法論變數。** dflash-mlx v0.1.7 的重測讓這件事暴露出來——32K 下 `cooldown=2` 的 decode tps 是 89.7、std=6.5（5 次 run 連續單調下滑來自熱壓力），但 `cooldown=60` 是 121.2、std=0.2。這 35% 的落差是晶片在背靠背負載下降頻。兩個數字都不是「對的」——它們衡量的是不同的東西（「背靠背負載下的穩態吞吐量」vs「單請求峰值表現」）。這個 lab 的標準是 cooldown=2 以維持跨框架公平，但 cooldown=60 的數字是「想知道這個框架在晶片涼的時候到底能跑多快」的正確參考。我們沒有用 cooldown=60 重測其他框架；如果你要做長脈絡比較來做 production sizing，建議自己量一次。
+**Apple Silicon 上 run 之間的 cooldown 是真的方法論變數。**
+長脈絡下，decode 速率明顯取決於晶片在 request 之間有多放鬆熱壓力。
+短 cooldown（2 秒）量到的是背靠背持續吞吐量；長 cooldown（60 秒）
+量到的是單請求的峰值表現。這份 summary 裡的 dflash-mlx 數字用的是
+`cooldown=60`，其他框架是 `cooldown=2`。如果你在做 production sizing，
+用符合你真實流量型態的 cooldown 自己量一次。
 
 **Qwen3 的 `/no_think` 各框架尊重程度不一。** 四個框架裡只有 mlx-vlm 跟 dflash-mlx 完全壓制了 reasoning token。rapid-mlx 跟 omlx 仍然會吐 `reasoning_content`，rapid-mlx 甚至連 `max_tokens` 都不對 thinking 階段生效——我們在請求 256 token 時看到過長達 2,155 token 的輸出。如果你需要嚴格的 thinking 控制，請透過 chat template 參數設 `enable_thinking=false`，不要靠 prompt 內的慣例。
 

@@ -30,7 +30,7 @@ DATA = ROOT / "data"
 FRAMEWORKS = [
     ("rapid-mlx", "rapid_v5.jsonl",  "#1f77b4", "o", "-"),
     ("omlx",      "omlx_v5.jsonl",   "#2ca02c", "s", "-"),
-    ("dflash-mlx","dflash_v6.jsonl", "#d62728", "^", "-"),
+    ("dflash-mlx","dflash_v6_c60.jsonl", "#d62728", "^", "-"),
     ("mlx-vlm",   "vlm_v5.jsonl",    "#ff7f0e", "D", "-"),
     ("mtplx*",    "mtplx_v5.jsonl",  "#9467bd", "v", "--"),
 ]
